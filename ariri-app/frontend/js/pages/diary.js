@@ -4,6 +4,14 @@
 (function () {
   'use strict';
 
+  function escapeAttr(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/"/g, '&quot;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
   function formatDate(isoStr) {
     if (!isoStr) return '';
     try {
@@ -72,7 +80,14 @@
 
     var imageHtml = '';
     if (imageSrc) {
-      imageHtml = '<img class="diary-post-image" src="' + imageSrc + '" alt="Imagem da postagem" loading="lazy" onerror="this.style.display=\'none\'">';
+      imageHtml =
+        '<button class="diary-post-media" type="button" aria-label="Ampliar imagem da postagem" ' +
+          'data-image-src="' + escapeAttr(imageSrc) + '" ' +
+          'data-image-title="' + escapeAttr(post.title || 'Postagem') + '" ' +
+          'data-image-author="' + escapeAttr(authorName) + '" ' +
+          'data-image-date="' + escapeAttr(dateStr) + '">' +
+          '<img class="diary-post-image" src="' + imageSrc + '" alt="Imagem da postagem" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.style.display=\'none\'">' +
+        '</button>';
     }
 
     return '<article class="diary-post-card' + (post.pending_sync ? ' pending-sync' : '') + '">' +
@@ -125,18 +140,66 @@
               '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
             '</button>' +
           '</div>' +
-        '</div>' +
+      '</div>' +
       '</div>' +
       '<div id="diary-feed" class="mt-16"></div>' +
-      '<div id="diary-loading" class="text-center mt-24"><div class="spinner"></div></div>';
+      '<div id="diary-loading" class="text-center mt-24"><div class="spinner"></div></div>' +
+      '<div id="diary-lightbox" class="diary-lightbox hidden" aria-hidden="true">' +
+        '<div class="diary-lightbox-backdrop" data-close-lightbox="true"></div>' +
+        '<div class="diary-lightbox-dialog" role="dialog" aria-modal="true" aria-label="Imagem ampliada da postagem">' +
+          '<button class="diary-lightbox-close" id="diary-lightbox-close" type="button" aria-label="Fechar imagem ampliada">&times;</button>' +
+          '<div class="diary-lightbox-meta">' +
+            '<p class="diary-lightbox-kicker" id="diary-lightbox-author"></p>' +
+            '<h2 class="diary-lightbox-title" id="diary-lightbox-title"></h2>' +
+            '<p class="diary-lightbox-date" id="diary-lightbox-date"></p>' +
+          '</div>' +
+          '<img id="diary-lightbox-image" class="diary-lightbox-image" alt="Imagem ampliada da postagem">' +
+        '</div>' +
+      '</div>';
 
     container.innerHTML = html;
 
     var card = document.getElementById('new-post-card');
+    var lightboxEl = document.getElementById('diary-lightbox');
+    var lightboxImageEl = document.getElementById('diary-lightbox-image');
+    var lightboxTitleEl = document.getElementById('diary-lightbox-title');
+    var lightboxAuthorEl = document.getElementById('diary-lightbox-author');
+    var lightboxDateEl = document.getElementById('diary-lightbox-date');
+
     function goNew() { window.location.hash = '#/diary/new'; }
+    function closeLightbox() {
+      lightboxEl.classList.add('hidden');
+      lightboxEl.setAttribute('aria-hidden', 'true');
+      lightboxImageEl.removeAttribute('src');
+    }
+    function openLightbox(trigger) {
+      lightboxImageEl.src = trigger.getAttribute('data-image-src') || '';
+      lightboxTitleEl.textContent = trigger.getAttribute('data-image-title') || 'Postagem';
+      lightboxAuthorEl.textContent = trigger.getAttribute('data-image-author') || '';
+      lightboxDateEl.textContent = trigger.getAttribute('data-image-date') || '';
+      lightboxEl.classList.remove('hidden');
+      lightboxEl.setAttribute('aria-hidden', 'false');
+    }
+
     card.addEventListener('click', goNew);
     card.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goNew(); }
+    });
+    container.addEventListener('click', function (e) {
+      var mediaTrigger = e.target.closest('.diary-post-media');
+      if (mediaTrigger) {
+        openLightbox(mediaTrigger);
+        return;
+      }
+
+      if (e.target.closest('[data-close-lightbox="true"]') || e.target.id === 'diary-lightbox-close') {
+        closeLightbox();
+      }
+    });
+    container.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && lightboxEl && !lightboxEl.classList.contains('hidden')) {
+        closeLightbox();
+      }
     });
 
     var base = window.Sync ? window.Sync.getServerUrl() : '';
