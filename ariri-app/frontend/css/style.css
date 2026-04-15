@@ -1014,18 +1014,25 @@ body {
   width: 100%;
   max-height: 280px;
   object-fit: cover;
+  transition: transform 0.28s ease;
 }
 
 .diary-post-media {
   display: block;
   width: 100%;
-  cursor: zoom-in;
+  cursor: pointer;
   background: transparent;
+  overflow: hidden;
 }
 
 .diary-post-media:focus-visible {
   outline: 3px solid rgba(200, 16, 46, 0.2);
   outline-offset: -3px;
+}
+
+.diary-post-media:hover .diary-post-image,
+.diary-post-media:focus-visible .diary-post-image {
+  transform: scale(1.08);
 }
 
 .diary-post-body {
