@@ -16,7 +16,13 @@
       '<div class="info-cards">';
     for (var i = 0; i < DAYS.length; i++) {
       html += '<div class="info-day-card" data-day="' + DAYS[i].id + '" role="button" tabindex="0">' +
-        '<span class="info-day-label">' + DAYS[i].label + '</span></div>';
+        '<div class="info-day-card-inner">' +
+          '<div class="info-day-copy">' +
+            '<span class="info-day-kicker">Programacao</span>' +
+            '<span class="info-day-label">' + DAYS[i].label + '</span>' +
+          '</div>' +
+          '<span class="info-day-arrow" aria-hidden="true">&rarr;</span>' +
+        '</div></div>';
     }
     html += '</div>';
     container.innerHTML = html;
