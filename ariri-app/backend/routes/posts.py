@@ -83,18 +83,11 @@ def create_post():
 
 @posts_bp.route('/api/posts', methods=['GET'])
 def list_posts():
-    """Lista apenas as postagens da pessoa informada."""
+    """Lista todas as postagens ordenadas por created_at decrescente."""
     try:
-        volunteer_name = request.args.get('volunteer_name', '')
-        normalized_name = _normalize_name(volunteer_name)
-        if not normalized_name:
-            return jsonify([]), 200
-
         posts = Post.query.order_by(Post.created_at.desc()).all()
         result = []
         for p in posts:
-            if _normalize_name(p.volunteer_name) != normalized_name:
-                continue
             result.append({
                 "id": p.id,
                 "volunteer_name": p.volunteer_name,

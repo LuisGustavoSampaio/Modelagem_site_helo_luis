@@ -5,7 +5,6 @@
 
   function readB64(f) { return new Promise(function (res, rej) { var r = new FileReader(); r.onload = function () { res(r.result); }; r.onerror = function () { rej(new Error('err')); }; r.readAsDataURL(f); }); }
   function toast(msg, err) { var e = document.querySelector('.toast'); if (e) e.remove(); var t = document.createElement('div'); t.className = 'toast' + (err ? ' toast-error' : ''); t.textContent = msg; document.body.appendChild(t); setTimeout(function () { if (t.parentNode) t.remove(); }, 3000); }
-  function normalizeName(value) { return String(value || '').trim().toLowerCase().replace(/\s+/g, ' '); }
 
   window.renderNewPostPage = function (container) {
     var savedName = localStorage.getItem('volunteer_name') || '';
@@ -104,14 +103,13 @@
     var rp = (imgFile && window.resizeImage) ? window.resizeImage(imgFile) : Promise.resolve(imgFile);
     return rp.then(function (p) { var dp = p ? readB64(p) : Promise.resolve(null); return dp.then(function (b64) {
       var createdAt = new Date().toISOString();
-      var cacheKey = 'posts:' + normalizeName(vol);
       return window.DB.addPending('pending_posts', {
         type: 'post',
         created_at: createdAt,
         data: { volunteer_name: vol, owner_key: ownerKey, title: title, description: desc, image: b64 }
       }).then(function (id) {
         if (window.Sync && window.Sync.appendCachedListItem) {
-          window.Sync.appendCachedListItem(cacheKey, {
+          window.Sync.appendCachedListItem('posts', {
             id: id,
             volunteer_name: vol,
             owner_key: ownerKey,

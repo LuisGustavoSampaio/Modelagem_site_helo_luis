@@ -46,10 +46,6 @@
     };
   }
 
-  function buildPostsCacheKey(currentVolunteer) {
-    return 'posts:' + normalizeName(currentVolunteer);
-  }
-
   function canDeletePost(post, currentVolunteer, currentOwnerKey) {
     if (!currentVolunteer) return false;
     if (post && post.owner_key) {
@@ -142,16 +138,10 @@
     feedEl.innerHTML = feedHtml;
   }
 
-  function loadPendingPosts(currentVolunteer) {
+  function loadPendingPosts() {
     if (!window.DB || !window.DB.getPending) return Promise.resolve([]);
     return window.DB.getPending('pending_posts')
-      .then(function (items) {
-        return items
-          .filter(function (item) {
-            return normalizeName(item && item.data && item.data.volunteer_name) === normalizeName(currentVolunteer);
-          })
-          .map(normalizePendingPost);
-      })
+      .then(function (items) { return items.map(normalizePendingPost); })
       .catch(function () { return []; });
   }
 
@@ -182,7 +172,6 @@
     var currentOwnerKey = window.Sync && window.Sync.getOwnerKeyForVolunteer
       ? window.Sync.getOwnerKeyForVolunteer(currentVolunteer)
       : '';
-    var postsCacheKey = buildPostsCacheKey(currentVolunteer);
     var feedEl = document.getElementById('diary-feed');
     var loadingEl = document.getElementById('diary-loading');
     var initialPendingPosts = [];
@@ -205,8 +194,10 @@
       }
 
       if (window.Sync && window.Sync.removeCachedListItem) {
-        window.Sync.removeCachedListItem(postsCacheKey, postId);
         window.Sync.removeCachedListItem('posts', postId);
+        if (postOwnerKey) {
+          window.Sync.removeCachedListItem('posts:' + normalizeName(currentVolunteer), postId);
+        }
       }
 
       if (isPendingOnly) {
@@ -247,17 +238,16 @@
       }
     });
 
-    loadPendingPosts(currentVolunteer).then(function (pendingPosts) {
+    loadPendingPosts().then(function (pendingPosts) {
       initialPendingPosts = pendingPosts || [];
       if (initialPendingPosts.length > 0) {
         loadingEl.classList.add('hidden');
         renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts])), base, currentVolunteer, currentOwnerKey);
       }
 
-      var postsPath = '/api/posts?volunteer_name=' + encodeURIComponent(currentVolunteer);
       return window.Sync && window.Sync.fetchJsonWithCache
-        ? window.Sync.fetchJsonWithCache(postsPath, postsCacheKey, 2500)
-        : fetch(base + postsPath)
+        ? window.Sync.fetchJsonWithCache('/api/posts', 'posts', 2500)
+        : fetch(base + '/api/posts')
             .then(function (res) {
               if (!res.ok) throw new Error('err');
               return res.json();
