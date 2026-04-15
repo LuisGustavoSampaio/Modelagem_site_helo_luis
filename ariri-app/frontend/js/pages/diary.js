@@ -81,7 +81,7 @@
         '<span class="diary-post-author">' + authorName + '</span>' +
         '<span class="diary-post-date">' + dateStr + '</span>' +
       '</div>' +
-      (pendingBadge ? '<div style="padding:12px 16px 0">' + pendingBadge + '</div>' : '') +
+      (pendingBadge ? '<div class="diary-pending-badge-row">' + pendingBadge + '</div>' : '') +
       imageHtml +
       '<div class="diary-post-body">' +
         '<h3 class="diary-post-title">' + (post.title || '') + '</h3>' +

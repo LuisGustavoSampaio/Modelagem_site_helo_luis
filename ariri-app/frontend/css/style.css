@@ -1251,6 +1251,10 @@ body {
   background: var(--warning);
 }
 
+.diary-pending-badge-row {
+  padding: 8px 16px 0;
+}
+
 .pending-list {
   display: flex;
   flex-direction: column;
