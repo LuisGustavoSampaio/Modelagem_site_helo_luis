@@ -153,6 +153,9 @@
         return res.json();
       })
       .then(function (forms) {
+        if (window.Sync && window.Sync.cacheApiData) {
+          window.Sync.cacheApiData('forms', forms);
+        }
         loadingEl.classList.add('hidden');
         if (forms && forms.length > 0) {
           dashboardEl.innerHTML = '<div class="detail-cards">' + buildDashboardCard(forms) + '</div>';
@@ -161,7 +164,14 @@
         }
       })
       .catch(function () {
+        var cachedForms = window.Sync && window.Sync.getCachedApiData
+          ? window.Sync.getCachedApiData('forms')
+          : null;
         loadingEl.classList.add('hidden');
+        if (cachedForms && cachedForms.length > 0) {
+          dashboardEl.innerHTML = '<div class="detail-cards">' + buildDashboardCard(cachedForms) + '</div>';
+          return;
+        }
         dashboardEl.innerHTML = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
       });
   }

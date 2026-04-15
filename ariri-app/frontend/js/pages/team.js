@@ -1,8 +1,8 @@
 /**
- * team.js — Página de Dados da Equipe
+ * team.js - Pagina de Dados da Equipe
  *
  * Solicita PIN validado contra o servidor via POST /api/verify-pin.
- * Após validação, exibe lista de voluntários.
+ * Apos validacao, exibe lista de voluntarios.
  *
  * Requisitos: 9.1, 9.2, 9.3
  */
@@ -27,11 +27,31 @@
   }
 
   function buildTeamItem(volunteer) {
-    var initial = (volunteer.full_name || '?').charAt(0).toUpperCase();
     return '<div class="menu-simple-item" data-id="' + volunteer.id + '" style="cursor:pointer">' +
       '<span>' + (volunteer.full_name || '') + '</span>' +
       '<span class="menu-simple-arrow">&gt;</span>' +
     '</div>';
+  }
+
+  function attachVolunteerNavigation(listEl) {
+    var items = listEl.querySelectorAll('.menu-simple-item[data-id]');
+    items.forEach(function (item) {
+      item.addEventListener('click', function () {
+        window.location.hash = '#/menu/team/' + item.getAttribute('data-id');
+      });
+    });
+  }
+
+  function renderVolunteerList(listEl, volunteers) {
+    if (!volunteers || volunteers.length === 0) {
+      listEl.innerHTML = '<div class="empty-state"><p class="empty-state-text">Nenhum voluntario cadastrado.</p></div>';
+      return;
+    }
+
+    var html = '';
+    volunteers.forEach(function (v) { html += buildTeamItem(v); });
+    listEl.innerHTML = html;
+    attachVolunteerNavigation(listEl);
   }
 
   function renderPinScreen(container) {
@@ -43,8 +63,8 @@
         '<h1 class="pin-title">Dados da Equipe</h1>' +
         '<p class="pin-subtitle">Digite o PIN para acessar</p>' +
         '<input type="password" inputmode="numeric" maxlength="4" pattern="[0-9]*" ' +
-          'class="pin-input" id="pin-input" placeholder="••••" autocomplete="off" ' +
-          'aria-label="PIN de 4 dígitos">' +
+          'class="pin-input" id="pin-input" placeholder="****" autocomplete="off" ' +
+          'aria-label="PIN de 4 digitos">' +
         '<p class="pin-error hidden" id="pin-error">PIN incorreto</p>' +
       '</div>';
 
@@ -95,25 +115,22 @@
     fetch(base + '/api/volunteers')
       .then(function (res) { if (!res.ok) throw new Error('err'); return res.json(); })
       .then(function (volunteers) {
-        loadingEl.classList.add('hidden');
-        if (!volunteers || volunteers.length === 0) {
-          listEl.innerHTML = '<div class="empty-state"><p class="empty-state-text">Nenhum voluntário cadastrado.</p></div>';
-          return;
+        if (window.Sync && window.Sync.cacheApiData) {
+          window.Sync.cacheApiData('volunteers', volunteers);
         }
-        var html = '';
-        volunteers.forEach(function (v) { html += buildTeamItem(v); });
-        listEl.innerHTML = html;
-
-        var items = listEl.querySelectorAll('.menu-simple-item[data-id]');
-        items.forEach(function (item) {
-          item.addEventListener('click', function () {
-            window.location.hash = '#/menu/team/' + item.getAttribute('data-id');
-          });
-        });
+        loadingEl.classList.add('hidden');
+        renderVolunteerList(listEl, volunteers);
       })
       .catch(function () {
+        var volunteers = window.Sync && window.Sync.getCachedApiData
+          ? window.Sync.getCachedApiData('volunteers')
+          : null;
         loadingEl.classList.add('hidden');
-        listEl.innerHTML = '<div class="empty-state"><p class="empty-state-text">Não foi possível carregar os voluntários.</p></div>';
+        if (volunteers && volunteers.length > 0) {
+          renderVolunteerList(listEl, volunteers);
+          return;
+        }
+        listEl.innerHTML = '<div class="empty-state"><p class="empty-state-text">Nao foi possivel carregar os voluntarios.</p></div>';
       });
   }
 

@@ -1,10 +1,5 @@
 /**
- * volunteer-profile.js — Perfil completo do voluntário
- *
- * Layout: botão voltar + logo no topo, avatar + nome,
- * dados pessoais em lista simples, termos e dados médicos.
- *
- * Requisitos: 9.4
+ * volunteer-profile.js - Perfil completo do voluntario
  */
 (function () {
   'use strict';
@@ -23,17 +18,56 @@
     '</svg>';
 
   function formatDate(dateStr) {
-    if (!dateStr) return '—';
+    if (!dateStr) return '-';
     var parts = dateStr.split('-');
     if (parts.length !== 3) return dateStr;
     return parts[2] + '/' + parts[1] + '/' + parts[0];
   }
 
   function esc(str) {
-    if (!str) return '—';
+    if (!str) return '-';
     var div = document.createElement('div');
     div.textContent = str;
     return div.innerHTML;
+  }
+
+  function buildProfileHtml(v, base) {
+    var initial = (v.full_name || '?').charAt(0).toUpperCase();
+    var avatarHtml = '<div class="vol-profile-avatar">' + initial + '</div>';
+    if (v.profile_image) {
+      avatarHtml = '<img class="vol-profile-avatar" src="' + base + '/uploads/' + v.profile_image + '" alt="' + esc(v.full_name) + '">';
+    }
+
+    return '<div class="vol-profile-header">' +
+        avatarHtml +
+        '<span class="vol-profile-name">' + esc(v.full_name) + '</span>' +
+      '</div>' +
+      '<div class="vol-profile-data">' +
+        '<p>' + esc(v.rg) + '</p>' +
+        '<p>' + esc(v.cpf) + '</p>' +
+        '<p>' + formatDate(v.birth_date) + '</p>' +
+        '<p>' + esc(v.gender) + '</p>' +
+        '<p>' + esc(v.profession) + '</p>' +
+        '<p>' + esc(v.email) + '</p>' +
+        '<p>' + esc(v.phone) + '</p>' +
+        '<p>' + esc(v.address) + '</p>' +
+      '</div>' +
+      '<div class="vol-profile-docs">' +
+        '<p class="form-section-label">Termos assinados:</p>' +
+        '<div class="vol-doc-box">' +
+          (v.terms_path
+            ? '<a href="' + base + '/uploads/' + v.terms_path + '" target="_blank" rel="noopener">' + docSvg + '</a>'
+            : docSvg) +
+        '</div>' +
+      '</div>' +
+      '<div class="vol-profile-docs">' +
+        '<p class="form-section-label">Dados medicos:</p>' +
+        '<div class="vol-doc-box">' +
+          (v.medical_data_path
+            ? '<a href="' + base + '/uploads/' + v.medical_data_path + '" target="_blank" rel="noopener">' + docSvg + '</a>'
+            : docSvg) +
+        '</div>' +
+      '</div>';
   }
 
   function renderVolunteerProfilePage(container, params) {
@@ -52,7 +86,7 @@
 
     if (!volunteerId) {
       document.getElementById('profile-content').innerHTML =
-        '<div class="empty-state"><p class="empty-state-text">Voluntário não encontrado.</p></div>';
+        '<div class="empty-state"><p class="empty-state-text">Voluntario nao encontrado.</p></div>';
       return;
     }
 
@@ -64,54 +98,24 @@
         return res.json();
       })
       .then(function (v) {
+        if (window.Sync && window.Sync.cacheApiData) {
+          window.Sync.cacheApiData('volunteer:' + volunteerId, v);
+        }
         var contentEl = document.getElementById('profile-content');
         if (!contentEl) return;
-
-        var initial = (v.full_name || '?').charAt(0).toUpperCase();
-        var avatarHtml = '<div class="vol-profile-avatar">' + initial + '</div>';
-        if (v.profile_image) {
-          avatarHtml = '<img class="vol-profile-avatar" src="' + base + '/uploads/' + v.profile_image + '" alt="' + esc(v.full_name) + '">';
-        }
-
-        var html =
-          '<div class="vol-profile-header">' +
-            avatarHtml +
-            '<span class="vol-profile-name">' + esc(v.full_name) + '</span>' +
-          '</div>' +
-          '<div class="vol-profile-data">' +
-            '<p>' + esc(v.rg) + '</p>' +
-            '<p>' + esc(v.cpf) + '</p>' +
-            '<p>' + formatDate(v.birth_date) + '</p>' +
-            '<p>' + esc(v.gender) + '</p>' +
-            '<p>' + esc(v.profession) + '</p>' +
-            '<p>' + esc(v.email) + '</p>' +
-            '<p>' + esc(v.phone) + '</p>' +
-            '<p>' + esc(v.address) + '</p>' +
-          '</div>' +
-          '<div class="vol-profile-docs">' +
-            '<p class="form-section-label">Termos assinados:</p>' +
-            '<div class="vol-doc-box">' +
-              (v.terms_path
-                ? '<a href="' + base + '/uploads/' + v.terms_path + '" target="_blank" rel="noopener">' + docSvg + '</a>'
-                : docSvg) +
-            '</div>' +
-          '</div>' +
-          '<div class="vol-profile-docs">' +
-            '<p class="form-section-label">Dados médicos:</p>' +
-            '<div class="vol-doc-box">' +
-              (v.medical_data_path
-                ? '<a href="' + base + '/uploads/' + v.medical_data_path + '" target="_blank" rel="noopener">' + docSvg + '</a>'
-                : docSvg) +
-            '</div>' +
-          '</div>';
-
-        contentEl.innerHTML = html;
+        contentEl.innerHTML = buildProfileHtml(v, base);
       })
       .catch(function () {
+        var v = window.Sync && window.Sync.getCachedApiData
+          ? window.Sync.getCachedApiData('volunteer:' + volunteerId)
+          : null;
         var contentEl = document.getElementById('profile-content');
-        if (contentEl) {
-          contentEl.innerHTML = '<div class="empty-state"><p class="empty-state-text">Não foi possível carregar o perfil.</p></div>';
+        if (!contentEl) return;
+        if (v) {
+          contentEl.innerHTML = buildProfileHtml(v, base);
+          return;
         }
+        contentEl.innerHTML = '<div class="empty-state"><p class="empty-state-text">Nao foi possivel carregar o perfil.</p></div>';
       });
   }
 

@@ -19,6 +19,7 @@ const Sync = (() => {
   var STORES = ['pending_forms', 'pending_posts', 'pending_receipts'];
   var LS_KEY = 'server_url';
   var DEFAULT_SERVER_URL = 'https://modelagem-site-helo-luis.onrender.com';
+  var CACHE_PREFIX = 'api_cache:';
 
   var _intervalId = null;
 
@@ -39,6 +40,24 @@ const Sync = (() => {
    */
   function setServerUrl(url) {
     localStorage.setItem(LS_KEY, url || '');
+  }
+
+  function cacheApiData(key, data) {
+    try {
+      localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(data));
+    } catch (err) {
+      console.warn('Failed to cache API data for key:', key, err);
+    }
+  }
+
+  function getCachedApiData(key) {
+    try {
+      var raw = localStorage.getItem(CACHE_PREFIX + key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (err) {
+      console.warn('Failed to read cached API data for key:', key, err);
+      return null;
+    }
   }
 
   // ─── Connectivity indicator ───
@@ -225,7 +244,9 @@ const Sync = (() => {
     ping: ping,
     syncAll: syncAll,
     getServerUrl: getServerUrl,
-    setServerUrl: setServerUrl
+    setServerUrl: setServerUrl,
+    cacheApiData: cacheApiData,
+    getCachedApiData: getCachedApiData
   };
 })();
 

@@ -1,10 +1,10 @@
 /**
- * diary.js — Página do Diário de Bordo
+ * diary.js - Pagina do Diario de Bordo
  *
- * Layout: logo (esquerda) + "Diário de Bordo" (direita) no topo.
- * Card "Nova postagem:" com botão + circular verde.
+ * Layout: logo (esquerda) + "Diario de Bordo" (direita) no topo.
+ * Card "Nova postagem:" com botao + circular verde.
  * Feed de postagens sem avatar/foto de perfil.
- * Cada post: nome (esquerda) + data (direita), imagem, título, descrição.
+ * Cada post: nome (esquerda) + data (direita), imagem, titulo, descricao.
  *
  * Requisitos: 7.1, 7.2
  */
@@ -26,7 +26,7 @@
   }
 
   function buildPostCard(post, baseUrl) {
-    var authorName = post.volunteer_name || 'Anônimo';
+    var authorName = post.volunteer_name || 'Anonimo';
     var dateStr = formatDate(post.created_at);
 
     var imageHtml = '';
@@ -48,11 +48,26 @@
     '</article>';
   }
 
+  function renderPosts(feedEl, posts, base) {
+    if (!posts || posts.length === 0) {
+      feedEl.innerHTML =
+        '<div class="empty-state">' +
+          '<p class="empty-state-text">Nenhuma postagem ainda.<br>Seja o primeiro a compartilhar!</p>' +
+        '</div>';
+      return;
+    }
+
+    var feedHtml = '<div class="diary-feed-list">';
+    posts.forEach(function (post) { feedHtml += buildPostCard(post, base); });
+    feedHtml += '</div>';
+    feedEl.innerHTML = feedHtml;
+  }
+
   function renderDiaryPage(container) {
     var html =
       '<div class="page-top-bar">' +
         '<img src="assets/logo.png" alt="IPRA no Ariri" class="page-top-logo" onerror="this.style.display=\'none\'">' +
-        '<h1 class="page-top-title">Diário de Bordo</h1>' +
+        '<h1 class="page-top-title">Diario de Bordo</h1>' +
       '</div>' +
       '<div class="detail-cards">' +
         '<div class="detail-card new-form-card" id="new-post-card" role="button" tabindex="0" aria-label="Nova postagem">' +
@@ -86,23 +101,23 @@
         return res.json();
       })
       .then(function (posts) {
-        loadingEl.classList.add('hidden');
-        if (!posts || posts.length === 0) {
-          feedEl.innerHTML =
-            '<div class="empty-state">' +
-              '<p class="empty-state-text">Nenhuma postagem ainda.<br>Seja o primeiro a compartilhar!</p>' +
-            '</div>';
-          return;
+        if (window.Sync && window.Sync.cacheApiData) {
+          window.Sync.cacheApiData('posts', posts);
         }
-        var feedHtml = '<div class="diary-feed-list">';
-        posts.forEach(function (post) { feedHtml += buildPostCard(post, base); });
-        feedHtml += '</div>';
-        feedEl.innerHTML = feedHtml;
+        loadingEl.classList.add('hidden');
+        renderPosts(feedEl, posts, base);
       })
       .catch(function () {
+        var cachedPosts = window.Sync && window.Sync.getCachedApiData
+          ? window.Sync.getCachedApiData('posts')
+          : null;
         loadingEl.classList.add('hidden');
+        if (cachedPosts && cachedPosts.length > 0) {
+          renderPosts(feedEl, cachedPosts, base);
+          return;
+        }
         feedEl.innerHTML =
-          '<div class="empty-state"><p class="empty-state-text">Não foi possível carregar as postagens.</p></div>';
+          '<div class="empty-state"><p class="empty-state-text">Nao foi possivel carregar as postagens.</p></div>';
       });
   }
 

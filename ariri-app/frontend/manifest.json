@@ -1,0 +1,24 @@
+{
+  "name": "IPRA no Ariri",
+  "short_name": "Ariri",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#faf6ee",
+  "theme_color": "#1a4731",
+  "description": "Aplicativo offline-first para informacoes, formularios e diario de bordo do IPRA no Ariri.",
+  "icons": [
+    {
+      "src": "assets/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "assets/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}

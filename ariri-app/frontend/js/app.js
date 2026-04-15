@@ -367,6 +367,11 @@
     window.DB.init().catch(function (err) {
       console.error('IndexedDB init failed:', err);
     });
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function (err) {
+        console.error('Service worker registration failed:', err);
+      });
+    }
     window.Sync.start();
 
     // Always start with splash

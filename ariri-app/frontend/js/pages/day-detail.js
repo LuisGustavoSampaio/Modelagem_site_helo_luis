@@ -32,8 +32,20 @@
         if (!res.ok) throw new Error('HTTP ' + res.status);
         return res.json();
       })
-      .then(function (data) { _scheduleCache = data; return data; })
-      .catch(function () { return null; });
+      .then(function (data) {
+        _scheduleCache = data;
+        if (window.Sync && window.Sync.cacheApiData) {
+          window.Sync.cacheApiData('schedule', data);
+        }
+        return data;
+      })
+      .catch(function () {
+        var cached = window.Sync && window.Sync.getCachedApiData
+          ? window.Sync.getCachedApiData('schedule')
+          : null;
+        if (cached) _scheduleCache = cached;
+        return cached;
+      });
   }
 
   function findDay(data, dayId) {
