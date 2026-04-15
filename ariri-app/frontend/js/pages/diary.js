@@ -204,7 +204,7 @@
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goNew(); }
     });
 
-    container.addEventListener('click', function (e) {
+    feedEl.addEventListener('click', function (e) {
       var deleteTrigger = e.target.closest('[data-delete-post]');
       if (deleteTrigger) {
         removePost(
