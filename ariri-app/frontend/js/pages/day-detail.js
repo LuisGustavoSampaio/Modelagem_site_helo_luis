@@ -60,7 +60,7 @@
     container.innerHTML =
       '<div class="page-top-bar">' +
         '<button class="back-circle-btn" id="day-back">' + backArrowSvg + '</button>' +
-        '<img src="assets/logo.png" alt="IPRA no Ariri" class="page-top-logo" onerror="this.style.display=\'none\'">' +
+        '<div class="page-top-brand" aria-label="Mackenzie"><span class="page-top-brand-kicker">UPM</span><span class="page-top-brand-title">Mackenzie</span></div>' +
       '</div>' +
       '<div class="empty-state"><p class="empty-state-text">Dados não disponíveis</p></div>';
     document.getElementById('day-back').addEventListener('click', function () {
@@ -135,7 +135,7 @@
     container.innerHTML =
       '<div class="page-top-bar">' +
         '<button class="back-circle-btn" id="day-back-loading">' + backArrowSvg + '</button>' +
-        '<img src="assets/logo.png" alt="IPRA no Ariri" class="page-top-logo" onerror="this.style.display=\'none\'">' +
+        '<div class="page-top-brand" aria-label="Mackenzie"><span class="page-top-brand-kicker">UPM</span><span class="page-top-brand-title">Mackenzie</span></div>' +
       '</div>' +
       '<div class="spinner"></div>';
 
@@ -151,7 +151,7 @@
       var html =
         '<div class="page-top-bar">' +
           '<button class="back-circle-btn" id="day-back-main">' + backArrowSvg + '</button>' +
-          '<img src="assets/logo.png" alt="IPRA no Ariri" class="page-top-logo" onerror="this.style.display=\'none\'">' +
+          '<div class="page-top-brand" aria-label="Mackenzie"><span class="page-top-brand-kicker">UPM</span><span class="page-top-brand-title">Mackenzie</span></div>' +
         '</div>' +
         '<h2 class="day-detail-day-name">' + day.label + '</h2>' +
         '<div class="detail-cards">' +
