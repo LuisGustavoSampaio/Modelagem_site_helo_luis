@@ -29,15 +29,26 @@
     } catch (e) { return isoStr; }
   }
 
+  function toAsciiAction(action) {
+    if (!action) return '';
+    return String(action)
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
   function normalizeAction(action) {
+    var ascii = toAsciiAction(action);
     var map = {
-      'Visitação': 'Visitacao',
-      'Oração': 'Oracao',
-      'Manutenção': 'Manutencao',
-      'Educação': 'Educacao',
-      'Auxílio ao MEAP': 'Auxilio ao MEAP'
+      'Visitacao': 'Visitacao',
+      'Oracao': 'Oracao',
+      'Manutencao': 'Manutencao',
+      'Educacao': 'Educacao',
+      'Auxilio ao MEAP': 'Auxilio ao MEAP',
+      'P. Socorros': 'P. Socorros'
     };
-    return map[action] || action;
+    return map[ascii] || ascii;
   }
 
   function normalizePendingForm(item) {
@@ -52,25 +63,39 @@
     };
   }
 
+  function normalizeAnyForm(form) {
+    return {
+      id: form.id,
+      volunteer_name: form.volunteer_name,
+      actions: ((form.actions || [])).map(normalizeAction),
+      description: form.description,
+      people_served: form.people_served,
+      created_at: form.created_at,
+      pending_sync: !!form.pending_sync
+    };
+  }
+
   function mergeForms(lists) {
     var byId = {};
 
     lists.forEach(function (list) {
       (list || []).forEach(function (form) {
         if (!form) return;
-        var existing = byId[form.id];
+        var normalized = normalizeAnyForm(form);
+        var existing = byId[normalized.id];
+
         if (!existing) {
-          byId[form.id] = form;
+          byId[normalized.id] = normalized;
           return;
         }
 
-        if (form.pending_sync) {
-          byId[form.id] = form;
+        if (normalized.pending_sync) {
+          byId[normalized.id] = normalized;
           return;
         }
 
         if (!existing.pending_sync) {
-          byId[form.id] = form;
+          byId[normalized.id] = normalized;
         }
       });
     });
@@ -82,12 +107,17 @@
     var counts = {};
     var total = 0;
     ACTION_TYPES.forEach(function (a) { counts[a] = 0; });
+
     forms.forEach(function (form) {
-      (form.actions || []).forEach(function (a) {
-        var key = normalizeAction(a);
-        if (counts[key] !== undefined) { counts[key]++; total++; }
+      (form.actions || []).forEach(function (action) {
+        var key = normalizeAction(action);
+        if (counts[key] !== undefined) {
+          counts[key] += 1;
+          total += 1;
+        }
       });
     });
+
     return { counts: counts, total: total };
   }
 
@@ -141,13 +171,14 @@
   }
 
   function buildDashboardCard(forms) {
-    var agg = aggregateActions(forms);
+    var normalizedForms = (forms || []).map(normalizeAnyForm);
+    var agg = aggregateActions(normalizedForms);
     var maxCount = 0;
     ACTION_TYPES.forEach(function (a) { if (agg.counts[a] > maxCount) maxCount = agg.counts[a]; });
 
     var totalPeople = 0;
-    forms.forEach(function (f) {
-      totalPeople += (f.people_served || 1);
+    normalizedForms.forEach(function (f) {
+      totalPeople += Number(f.people_served || 1);
     });
 
     return '<div class="detail-card">' +
@@ -178,15 +209,16 @@
       '<div class="pending-list">';
 
     forms.forEach(function (form) {
-      var actions = (form.actions || []).join(', ') || 'Sem acao informada';
+      var normalized = normalizeAnyForm(form);
+      var actions = (normalized.actions || []).join(', ') || 'Sem acao informada';
       html += '<div class="pending-item">' +
         '<div class="pending-item-header">' +
-          '<span class="pending-item-title">' + (form.volunteer_name || 'Formulario salvo offline') + '</span>' +
-          '<span class="pending-item-meta">' + formatDate(form.created_at) + '</span>' +
+          '<span class="pending-item-title">' + (normalized.volunteer_name || 'Formulario salvo offline') + '</span>' +
+          '<span class="pending-item-meta">' + formatDate(normalized.created_at) + '</span>' +
         '</div>' +
         '<div class="pending-item-actions"><strong>Acoes:</strong> ' + actions + '</div>' +
-        '<div class="pending-item-meta"><strong>Pessoas atendidas:</strong> ' + (form.people_served || 1) + '</div>' +
-        (form.description ? '<div class="pending-item-meta">' + form.description + '</div>' : '') +
+        '<div class="pending-item-meta"><strong>Pessoas atendidas:</strong> ' + (normalized.people_served || 1) + '</div>' +
+        (normalized.description ? '<div class="pending-item-meta">' + normalized.description + '</div>' : '') +
       '</div>';
     });
 
@@ -199,6 +231,20 @@
     return window.DB.getPending('pending_forms')
       .then(function (items) { return items.map(normalizePendingForm); })
       .catch(function () { return []; });
+  }
+
+  function renderDashboardState(dashboardEl, pendingForms, syncedForms) {
+    var merged = mergeForms([pendingForms || [], syncedForms || []]);
+
+    if (merged.length === 0) {
+      dashboardEl.innerHTML = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
+      return;
+    }
+
+    dashboardEl.innerHTML = '<div class="detail-cards">' +
+      buildDashboardCard(merged) +
+      buildPendingFormsCard(pendingForms || []) +
+      '</div>';
   }
 
   function renderFormsPage(container) {
@@ -239,13 +285,7 @@
     loadPendingForms().then(function (pendingForms) {
       initialPendingForms = pendingForms || [];
       loadingEl.classList.add('hidden');
-
-      if (initialPendingForms.length > 0) {
-        dashboardEl.innerHTML = '<div class="detail-cards">' +
-          buildDashboardCard(mergeForms([initialPendingForms])) +
-          buildPendingFormsCard(initialPendingForms) +
-          '</div>';
-      }
+      renderDashboardState(dashboardEl, initialPendingForms, []);
 
       return window.Sync && window.Sync.fetchJsonWithCache
         ? window.Sync.fetchJsonWithCache('/api/forms', 'forms', 2500)
@@ -256,27 +296,11 @@
             })
             .catch(function () { return []; });
     }).then(function (syncedForms) {
-      var allForms = mergeForms([initialPendingForms, syncedForms || []]);
       loadingEl.classList.add('hidden');
-
-      if (allForms.length > 0) {
-        dashboardEl.innerHTML = '<div class="detail-cards">' +
-          buildDashboardCard(allForms) +
-          buildPendingFormsCard(initialPendingForms) +
-          '</div>';
-      } else {
-        dashboardEl.innerHTML = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
-      }
+      renderDashboardState(dashboardEl, initialPendingForms, syncedForms || []);
     }).catch(function () {
       loadingEl.classList.add('hidden');
-      if (initialPendingForms.length > 0) {
-        dashboardEl.innerHTML = '<div class="detail-cards">' +
-          buildDashboardCard(mergeForms([initialPendingForms])) +
-          buildPendingFormsCard(initialPendingForms) +
-          '</div>';
-        return;
-      }
-      dashboardEl.innerHTML = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
+      renderDashboardState(dashboardEl, initialPendingForms, []);
     });
   }
 
