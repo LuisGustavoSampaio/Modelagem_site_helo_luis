@@ -146,15 +146,8 @@
       '<div id="diary-loading" class="text-center mt-24"><div class="spinner"></div></div>' +
       '<div id="diary-lightbox" class="diary-lightbox hidden" aria-hidden="true">' +
         '<div class="diary-lightbox-backdrop" data-close-lightbox="true"></div>' +
-        '<div class="diary-lightbox-dialog" role="dialog" aria-modal="true" aria-label="Imagem ampliada da postagem">' +
-          '<button class="diary-lightbox-close" id="diary-lightbox-close" type="button" aria-label="Fechar imagem ampliada">&times;</button>' +
-          '<div class="diary-lightbox-meta">' +
-            '<p class="diary-lightbox-kicker" id="diary-lightbox-author"></p>' +
-            '<h2 class="diary-lightbox-title" id="diary-lightbox-title"></h2>' +
-            '<p class="diary-lightbox-date" id="diary-lightbox-date"></p>' +
-          '</div>' +
-          '<img id="diary-lightbox-image" class="diary-lightbox-image" alt="Imagem ampliada da postagem">' +
-        '</div>' +
+        '<button class="diary-lightbox-close" id="diary-lightbox-close" type="button" aria-label="Fechar imagem ampliada">&times;</button>' +
+        '<img id="diary-lightbox-image" class="diary-lightbox-image" alt="Imagem ampliada da postagem">' +
       '</div>';
 
     container.innerHTML = html;
@@ -162,10 +155,6 @@
     var card = document.getElementById('new-post-card');
     var lightboxEl = document.getElementById('diary-lightbox');
     var lightboxImageEl = document.getElementById('diary-lightbox-image');
-    var lightboxTitleEl = document.getElementById('diary-lightbox-title');
-    var lightboxAuthorEl = document.getElementById('diary-lightbox-author');
-    var lightboxDateEl = document.getElementById('diary-lightbox-date');
-
     function goNew() { window.location.hash = '#/diary/new'; }
     function closeLightbox() {
       lightboxEl.classList.add('hidden');
@@ -174,9 +163,6 @@
     }
     function openLightbox(trigger) {
       lightboxImageEl.src = trigger.getAttribute('data-image-src') || '';
-      lightboxTitleEl.textContent = trigger.getAttribute('data-image-title') || 'Postagem';
-      lightboxAuthorEl.textContent = trigger.getAttribute('data-image-author') || '';
-      lightboxDateEl.textContent = trigger.getAttribute('data-image-date') || '';
       lightboxEl.classList.remove('hidden');
       lightboxEl.setAttribute('aria-hidden', 'false');
     }
