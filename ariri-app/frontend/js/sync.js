@@ -7,6 +7,7 @@ const Sync = (() => {
   var POLL_INTERVAL = 30000;
   var STORES = ['pending_forms', 'pending_posts', 'pending_receipts'];
   var LS_KEY = 'server_url';
+  var OWNER_KEY_PREFIX = 'owner_key:';
   var DEFAULT_SERVER_URL = 'https://modelagem-site-helo-luis.onrender.com';
   var CACHE_PREFIX = 'api_cache:';
 
@@ -22,6 +23,28 @@ const Sync = (() => {
 
   function setServerUrl(url) {
     localStorage.setItem(LS_KEY, url || '');
+  }
+
+  function normalizeName(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+  }
+
+  function getOwnerKeyForVolunteer(volunteerName) {
+    var normalized = normalizeName(volunteerName);
+    if (!normalized) return '';
+
+    var key = OWNER_KEY_PREFIX + normalized;
+    var existing = localStorage.getItem(key);
+    if (existing) return existing;
+
+    var created = (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : String(Date.now()) + Math.random().toString(16).slice(2);
+    localStorage.setItem(key, created);
+    return created;
   }
 
   function _isDataUrl(value) {
@@ -234,6 +257,7 @@ const Sync = (() => {
                 upsertCachedListItem('posts', {
                   id: item.id,
                   volunteer_name: item.data && item.data.volunteer_name,
+                  owner_key: item.data && item.data.owner_key,
                   title: item.data && item.data.title,
                   description: item.data && item.data.description,
                   created_at: item.created_at
@@ -324,6 +348,7 @@ const Sync = (() => {
     syncAll: syncAll,
     getServerUrl: getServerUrl,
     setServerUrl: setServerUrl,
+    getOwnerKeyForVolunteer: getOwnerKeyForVolunteer,
     cacheApiData: cacheApiData,
     getCachedApiData: getCachedApiData,
     appendCachedListItem: appendCachedListItem,

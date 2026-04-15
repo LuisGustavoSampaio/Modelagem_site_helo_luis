@@ -126,6 +126,7 @@ def _sync_post(item_id, data, created_at):
     post = Post(
         id=item_id,
         volunteer_name=volunteer_name,
+        owner_key=data.get('owner_key'),
         title=title,
         description=data.get('description'),
         image_path=image_path,

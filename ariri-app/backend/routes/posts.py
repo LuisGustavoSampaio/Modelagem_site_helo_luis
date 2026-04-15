@@ -56,6 +56,7 @@ def create_post():
         post = Post(
             id=post_id,
             volunteer_name=volunteer_name,
+            owner_key=request.form.get('owner_key') or None,
             title=title,
             description=description,
             image_path=image_path,
@@ -67,6 +68,7 @@ def create_post():
         return jsonify({
             "id": post.id,
             "volunteer_name": post.volunteer_name,
+            "owner_key": post.owner_key,
             "title": post.title,
             "description": post.description,
             "image_path": post.image_path,
@@ -89,6 +91,7 @@ def list_posts():
             result.append({
                 "id": p.id,
                 "volunteer_name": p.volunteer_name,
+                "owner_key": p.owner_key,
                 "title": p.title,
                 "description": p.description,
                 "image_path": p.image_path,
@@ -106,6 +109,7 @@ def _delete_post_impl(post_id):
     try:
         body = request.get_json(silent=True) or {}
         volunteer_name = str(body.get('volunteer_name', '')).strip()
+        owner_key = str(body.get('owner_key', '')).strip()
         if not volunteer_name:
             return jsonify({"error": "volunteer_name e obrigatorio"}), 400
 
@@ -113,7 +117,10 @@ def _delete_post_impl(post_id):
         if not post:
             return jsonify({"error": "Postagem nao encontrada"}), 404
 
-        if _normalize_name(post.volunteer_name) != _normalize_name(volunteer_name):
+        if post.owner_key:
+            if not owner_key or post.owner_key != owner_key:
+                return jsonify({"error": "Voce nao pode excluir a postagem de outra pessoa"}), 403
+        elif _normalize_name(post.volunteer_name) != _normalize_name(volunteer_name):
             return jsonify({"error": "Voce nao pode excluir a postagem de outra pessoa"}), 403
 
         image_path = post.image_path

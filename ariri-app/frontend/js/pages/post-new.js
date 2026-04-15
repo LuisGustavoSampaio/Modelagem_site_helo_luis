@@ -85,27 +85,34 @@
 
   function sendOn(vol, title, desc, imgFile) {
     var base = window.Sync ? window.Sync.getServerUrl() : '';
+    var ownerKey = window.Sync && window.Sync.getOwnerKeyForVolunteer
+      ? window.Sync.getOwnerKeyForVolunteer(vol)
+      : '';
     var ip = (imgFile && window.resizeImage) ? window.resizeImage(imgFile) : Promise.resolve(imgFile);
     return ip.then(function (p) {
-      var fd = new FormData(); fd.append('volunteer_name', vol); fd.append('title', title); fd.append('description', desc);
+      var fd = new FormData(); fd.append('volunteer_name', vol); fd.append('title', title); fd.append('description', desc); fd.append('owner_key', ownerKey);
       if (p) fd.append('image', p, 'image.jpg');
       return fetch(base + '/api/posts', { method: 'POST', body: fd }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
     });
   }
 
   function saveOff(vol, title, desc, imgFile) {
+    var ownerKey = window.Sync && window.Sync.getOwnerKeyForVolunteer
+      ? window.Sync.getOwnerKeyForVolunteer(vol)
+      : '';
     var rp = (imgFile && window.resizeImage) ? window.resizeImage(imgFile) : Promise.resolve(imgFile);
     return rp.then(function (p) { var dp = p ? readB64(p) : Promise.resolve(null); return dp.then(function (b64) {
       var createdAt = new Date().toISOString();
       return window.DB.addPending('pending_posts', {
         type: 'post',
         created_at: createdAt,
-        data: { volunteer_name: vol, title: title, description: desc, image: b64 }
+        data: { volunteer_name: vol, owner_key: ownerKey, title: title, description: desc, image: b64 }
       }).then(function (id) {
         if (window.Sync && window.Sync.appendCachedListItem) {
           window.Sync.appendCachedListItem('posts', {
             id: id,
             volunteer_name: vol,
+            owner_key: ownerKey,
             title: title,
             description: desc,
             image_url: b64,

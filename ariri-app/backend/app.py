@@ -2,6 +2,7 @@ import os
 from flask import Flask, send_from_directory
 from flask_cors import CORS
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import inspect, text
 
 db = SQLAlchemy()
 
@@ -69,6 +70,7 @@ def create_app():
         except ImportError:
             pass
         db.create_all()
+        _ensure_runtime_schema()
 
     @app.route('/uploads/<path:filename>')
     def serve_upload(filename):
@@ -86,6 +88,19 @@ def create_app():
         return send_from_directory(FRONTEND_DIR, 'index.html')
 
     return app
+
+
+def _ensure_runtime_schema():
+    """Apply small additive schema changes for SQLite deployments."""
+    inspector = inspect(db.engine)
+    table_names = set(inspector.get_table_names())
+    if 'post' not in table_names:
+      return
+
+    post_columns = {column['name'] for column in inspector.get_columns('post')}
+    if 'owner_key' not in post_columns:
+      db.session.execute(text('ALTER TABLE post ADD COLUMN owner_key VARCHAR(64)'))
+      db.session.commit()
 
 
 def _register_blueprints(app):

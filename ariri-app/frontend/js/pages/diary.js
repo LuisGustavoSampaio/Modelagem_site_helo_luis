@@ -37,12 +37,21 @@
     return {
       id: item.id,
       volunteer_name: item.data && item.data.volunteer_name,
+      owner_key: item.data && item.data.owner_key,
       title: item.data && item.data.title,
       description: item.data && item.data.description,
       image_url: item.data && item.data.image,
       created_at: item.created_at,
       pending_sync: true
     };
+  }
+
+  function canDeletePost(post, currentVolunteer, currentOwnerKey) {
+    if (!currentVolunteer) return false;
+    if (post && post.owner_key) {
+      return !!currentOwnerKey && post.owner_key === currentOwnerKey;
+    }
+    return normalizeName(post && post.volunteer_name) === normalizeName(currentVolunteer);
   }
 
   function sortPostsDescending(posts) {
@@ -77,14 +86,14 @@
     return Object.keys(byId).map(function (id) { return byId[id]; });
   }
 
-  function buildPostCard(post, baseUrl, currentVolunteer) {
+  function buildPostCard(post, baseUrl, currentVolunteer, currentOwnerKey) {
     var authorName = post.volunteer_name || 'Anonimo';
     var dateStr = formatDate(post.created_at);
     var pendingBadge = post.pending_sync
       ? '<span class="sync-pending-badge">Aguardando conexao</span>'
       : '';
     var imageSrc = post.image_url || (post.image_path ? (baseUrl + '/uploads/' + post.image_path) : '');
-    var canDelete = currentVolunteer && normalizeName(authorName) === normalizeName(currentVolunteer);
+    var canDelete = canDeletePost(post, currentVolunteer, currentOwnerKey);
 
     var imageHtml = '';
     if (imageSrc) {
@@ -113,7 +122,7 @@
     '</article>';
   }
 
-  function renderPosts(feedEl, posts, base, currentVolunteer) {
+  function renderPosts(feedEl, posts, base, currentVolunteer, currentOwnerKey) {
     if (!posts || posts.length === 0) {
       feedEl.innerHTML =
         '<div class="empty-state">' +
@@ -123,7 +132,7 @@
     }
 
     var feedHtml = '<div class="diary-feed-list">';
-    posts.forEach(function (post) { feedHtml += buildPostCard(post, base, currentVolunteer); });
+    posts.forEach(function (post) { feedHtml += buildPostCard(post, base, currentVolunteer, currentOwnerKey); });
     feedHtml += '</div>';
     feedEl.innerHTML = feedHtml;
   }
@@ -159,6 +168,9 @@
     var card = document.getElementById('new-post-card');
     var base = window.Sync ? window.Sync.getServerUrl() : '';
     var currentVolunteer = (localStorage.getItem('volunteer_name') || '').trim();
+    var currentOwnerKey = window.Sync && window.Sync.getOwnerKeyForVolunteer
+      ? window.Sync.getOwnerKeyForVolunteer(currentVolunteer)
+      : '';
     var feedEl = document.getElementById('diary-feed');
     var loadingEl = document.getElementById('diary-loading');
     var initialPendingPosts = [];
@@ -189,7 +201,7 @@
         return fetch(base + '/api/posts/' + encodeURIComponent(postId) + '/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ volunteer_name: currentVolunteer })
+          body: JSON.stringify({ volunteer_name: currentVolunteer, owner_key: currentOwnerKey })
         });
       }).then(function (res) {
         if (!res.ok) throw new Error('delete_failed');
@@ -219,7 +231,7 @@
       initialPendingPosts = pendingPosts || [];
       if (initialPendingPosts.length > 0) {
         loadingEl.classList.add('hidden');
-        renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts])), base, currentVolunteer);
+        renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts])), base, currentVolunteer, currentOwnerKey);
       }
 
       return window.Sync && window.Sync.fetchJsonWithCache
@@ -232,11 +244,11 @@
             .catch(function () { return []; });
     }).then(function (onlinePosts) {
       loadingEl.classList.add('hidden');
-      renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts, onlinePosts || []])), base, currentVolunteer);
+      renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts, onlinePosts || []])), base, currentVolunteer, currentOwnerKey);
     }).catch(function () {
       loadingEl.classList.add('hidden');
       if (initialPendingPosts.length > 0) {
-        renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts])), base, currentVolunteer);
+        renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts])), base, currentVolunteer, currentOwnerKey);
         return;
       }
       feedEl.innerHTML =
