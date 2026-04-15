@@ -133,6 +133,7 @@
               pending_sync: true
             });
           }
+          window.dispatchEvent(new CustomEvent('app:data-changed'));
           return id;
         });
       });

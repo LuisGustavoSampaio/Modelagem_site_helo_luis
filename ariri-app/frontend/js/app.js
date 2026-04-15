@@ -362,6 +362,8 @@
   // ─── Inicialização ───
 
   window.addEventListener('hashchange', navigate);
+  window.addEventListener('app:data-changed', navigate);
+  window.addEventListener('app:connectivity-changed', navigate);
 
   document.addEventListener('DOMContentLoaded', function () {
     window.DB.init().catch(function (err) {
