@@ -50,6 +50,29 @@ const Sync = (() => {
     return list;
   }
 
+  function upsertCachedListItem(key, item) {
+    var current = getCachedApiData(key);
+    var list = Array.isArray(current) ? current.slice() : [];
+    var next = [];
+    var replaced = false;
+
+    list.forEach(function (entry) {
+      if (entry && item && entry.id === item.id) {
+        next.push(item);
+        replaced = true;
+      } else {
+        next.push(entry);
+      }
+    });
+
+    if (!replaced) {
+      next.unshift(item);
+    }
+
+    cacheApiData(key, next);
+    return next;
+  }
+
   function replaceCachedListIfUseful(key, items) {
     var current = getCachedApiData(key);
     var currentList = Array.isArray(current) ? current : [];
@@ -166,6 +189,38 @@ const Sync = (() => {
             );
           })
           .then(function () {
+            all.forEach(function (item) {
+              if (syncedIds.indexOf(item.id) === -1) return;
+
+              if (item.type === 'post') {
+                upsertCachedListItem('posts', {
+                  id: item.id,
+                  volunteer_name: item.data && item.data.volunteer_name,
+                  title: item.data && item.data.title,
+                  description: item.data && item.data.description,
+                  image_url: item.data && item.data.image,
+                  created_at: item.created_at
+                });
+              } else if (item.type === 'form') {
+                upsertCachedListItem('forms', {
+                  id: item.id,
+                  volunteer_name: item.data && item.data.volunteer_name,
+                  actions: item.data && item.data.actions,
+                  description: item.data && item.data.description,
+                  people_served: item.data && item.data.people_served,
+                  created_at: item.created_at
+                });
+              } else if (item.type === 'receipt') {
+                upsertCachedListItem('receipts', {
+                  id: item.id,
+                  title: item.data && item.data.title,
+                  description: item.data && item.data.description,
+                  image_url: item.data && item.data.image,
+                  created_at: item.created_at
+                });
+              }
+            });
+
             window.dispatchEvent(new CustomEvent('app:data-changed'));
             return { synced: result.synced || [], errors: result.errors || [] };
           });
@@ -236,6 +291,7 @@ const Sync = (() => {
     cacheApiData: cacheApiData,
     getCachedApiData: getCachedApiData,
     appendCachedListItem: appendCachedListItem,
+    upsertCachedListItem: upsertCachedListItem,
     replaceCachedListIfUseful: replaceCachedListIfUseful,
     fetchJsonWithCache: fetchJsonWithCache
   };

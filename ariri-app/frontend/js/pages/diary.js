@@ -36,6 +36,32 @@
     });
   }
 
+  function mergePosts(lists) {
+    var byId = {};
+
+    lists.forEach(function (list) {
+      (list || []).forEach(function (post) {
+        if (!post) return;
+        var existing = byId[post.id];
+        if (!existing) {
+          byId[post.id] = post;
+          return;
+        }
+
+        if (post.pending_sync) {
+          byId[post.id] = post;
+          return;
+        }
+
+        if (!existing.pending_sync) {
+          byId[post.id] = post;
+        }
+      });
+    });
+
+    return Object.keys(byId).map(function (id) { return byId[id]; });
+  }
+
   function buildPostCard(post, baseUrl) {
     var authorName = post.volunteer_name || 'Anonimo';
     var dateStr = formatDate(post.created_at);
@@ -123,7 +149,7 @@
       initialPendingPosts = pendingPosts || [];
       if (initialPendingPosts.length > 0) {
         loadingEl.classList.add('hidden');
-        renderPosts(feedEl, sortPostsDescending(initialPendingPosts.slice()), base);
+        renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts])), base);
       }
 
       return window.Sync && window.Sync.fetchJsonWithCache
@@ -136,11 +162,11 @@
             .catch(function () { return []; });
     }).then(function (onlinePosts) {
       loadingEl.classList.add('hidden');
-      renderPosts(feedEl, sortPostsDescending(initialPendingPosts.concat(onlinePosts || [])), base);
+      renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts, onlinePosts || []])), base);
     }).catch(function () {
       loadingEl.classList.add('hidden');
       if (initialPendingPosts.length > 0) {
-        renderPosts(feedEl, sortPostsDescending(initialPendingPosts.slice()), base);
+        renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts])), base);
         return;
       }
       feedEl.innerHTML =

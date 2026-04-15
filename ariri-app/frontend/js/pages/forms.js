@@ -52,6 +52,32 @@
     };
   }
 
+  function mergeForms(lists) {
+    var byId = {};
+
+    lists.forEach(function (list) {
+      (list || []).forEach(function (form) {
+        if (!form) return;
+        var existing = byId[form.id];
+        if (!existing) {
+          byId[form.id] = form;
+          return;
+        }
+
+        if (form.pending_sync) {
+          byId[form.id] = form;
+          return;
+        }
+
+        if (!existing.pending_sync) {
+          byId[form.id] = form;
+        }
+      });
+    });
+
+    return Object.keys(byId).map(function (id) { return byId[id]; });
+  }
+
   function aggregateActions(forms) {
     var counts = {};
     var total = 0;
@@ -216,7 +242,7 @@
 
       if (initialPendingForms.length > 0) {
         dashboardEl.innerHTML = '<div class="detail-cards">' +
-          buildDashboardCard(initialPendingForms) +
+          buildDashboardCard(mergeForms([initialPendingForms])) +
           buildPendingFormsCard(initialPendingForms) +
           '</div>';
       }
@@ -230,7 +256,7 @@
             })
             .catch(function () { return []; });
     }).then(function (syncedForms) {
-      var allForms = (syncedForms || []).concat(initialPendingForms);
+      var allForms = mergeForms([initialPendingForms, syncedForms || []]);
       loadingEl.classList.add('hidden');
 
       if (allForms.length > 0) {
@@ -245,7 +271,7 @@
       loadingEl.classList.add('hidden');
       if (initialPendingForms.length > 0) {
         dashboardEl.innerHTML = '<div class="detail-cards">' +
-          buildDashboardCard(initialPendingForms) +
+          buildDashboardCard(mergeForms([initialPendingForms])) +
           buildPendingFormsCard(initialPendingForms) +
           '</div>';
         return;
