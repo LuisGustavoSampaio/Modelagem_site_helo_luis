@@ -24,9 +24,37 @@ const Sync = (() => {
     localStorage.setItem(LS_KEY, url || '');
   }
 
+  function _isDataUrl(value) {
+    return typeof value === 'string' && value.indexOf('data:image/') === 0;
+  }
+
+  function _sanitizeForCache(value) {
+    if (Array.isArray(value)) {
+      return value.map(_sanitizeForCache);
+    }
+
+    if (!value || typeof value !== 'object') {
+      return value;
+    }
+
+    var sanitized = {};
+    Object.keys(value).forEach(function (key) {
+      var entry = value[key];
+
+      if ((key === 'image' || key === 'image_url') && _isDataUrl(entry)) {
+        sanitized[key] = null;
+        return;
+      }
+
+      sanitized[key] = _sanitizeForCache(entry);
+    });
+
+    return sanitized;
+  }
+
   function cacheApiData(key, data) {
     try {
-      localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(data));
+      localStorage.setItem(CACHE_PREFIX + key, JSON.stringify(_sanitizeForCache(data)));
     } catch (err) {
       console.warn('Failed to cache API data for key:', key, err);
     }
@@ -198,7 +226,6 @@ const Sync = (() => {
                   volunteer_name: item.data && item.data.volunteer_name,
                   title: item.data && item.data.title,
                   description: item.data && item.data.description,
-                  image_url: item.data && item.data.image,
                   created_at: item.created_at
                 });
               } else if (item.type === 'form') {
@@ -215,7 +242,6 @@ const Sync = (() => {
                   id: item.id,
                   title: item.data && item.data.title,
                   description: item.data && item.data.description,
-                  image_url: item.data && item.data.image,
                   created_at: item.created_at
                 });
               }
