@@ -8,61 +8,81 @@ db = SQLAlchemy()
 # Paths
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
 FRONTEND_DIR = os.path.abspath(os.path.join(BASE_DIR, '..', 'frontend'))
-UPLOADS_DIR = os.path.join(BASE_DIR, 'uploads')
+
+
+def _resolve_data_dir():
+    """Resolve the directory used for persistent runtime data."""
+    configured = os.environ.get('ARIRI_DATA_DIR')
+    if configured:
+        return os.path.abspath(configured)
+    return BASE_DIR
+
+
+def _resolve_database_uri(data_dir):
+    """Build the SQLAlchemy URI, preferring an explicit env override."""
+    configured = os.environ.get('DATABASE_URL')
+    if configured:
+        if configured.startswith('postgres://'):
+            configured = 'postgresql://' + configured[len('postgres://'):]
+        return configured
+    return 'sqlite:///' + os.path.join(data_dir, 'ariri.db')
+
+
+def _resolve_uploads_dir(data_dir):
+    """Resolve the uploads directory, allowing a dedicated persistent mount."""
+    configured = os.environ.get('ARIRI_UPLOADS_DIR')
+    if configured:
+        return os.path.abspath(configured)
+    return os.path.join(data_dir, 'uploads')
 
 
 def create_app():
-    """Cria e configura a aplicação Flask."""
+    """Create and configure the Flask application."""
+    data_dir = _resolve_data_dir()
+    uploads_dir = _resolve_uploads_dir(data_dir)
+
     app = Flask(
         __name__,
-        static_folder=None  # Disable default static handler; we serve manually
+        static_folder=None  # Disable default static handler; we serve manually.
     )
 
-    # SQLite database stored in the backend directory
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(BASE_DIR, 'ariri.db')
-    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-    app.config['UPLOADS_DIR'] = UPLOADS_DIR
+    os.makedirs(data_dir, exist_ok=True)
 
-    # PIN para áreas protegidas (Prestação de Contas e Dados da Equipe)
-    # Altere este valor para definir a senha de acesso
+    # Prefer DATABASE_URL when present; otherwise keep SQLite with a configurable data dir.
+    app.config['SQLALCHEMY_DATABASE_URI'] = _resolve_database_uri(data_dir)
+    app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+    app.config['UPLOADS_DIR'] = uploads_dir
+
+    # PIN for protected sections.
     app.config['ACCESS_PIN'] = os.environ.get('ARIRI_PIN', '1234')
 
-    # Initialize extensions
     db.init_app(app)
     CORS(app)
 
-    # Ensure uploads directory exists
-    os.makedirs(UPLOADS_DIR, exist_ok=True)
+    os.makedirs(uploads_dir, exist_ok=True)
 
-    # Register blueprints (lazy — modules created in later tasks)
     _register_blueprints(app)
 
-    # Create database tables
     with app.app_context():
-        # Import models so SQLAlchemy knows about them
         try:
             from . import models  # noqa: F401
         except ImportError:
             pass
         db.create_all()
 
-    # Serve uploaded files (images from forms, diary, receipts, volunteer profiles)
     @app.route('/uploads/<path:filename>')
     def serve_upload(filename):
-        return send_from_directory(UPLOADS_DIR, filename)
+        return send_from_directory(uploads_dir, filename)
 
-    # SPA catch-all: return index.html for any non-API, non-static route
     @app.route('/')
     def serve_index():
         return send_from_directory(FRONTEND_DIR, 'index.html')
 
     @app.route('/<path:path>')
     def catch_all(path):
-        # Serve actual static files if they exist
         file_path = os.path.join(FRONTEND_DIR, path)
         if os.path.isfile(file_path):
             return send_from_directory(FRONTEND_DIR, path)
-        # Otherwise return index.html for SPA routing
         return send_from_directory(FRONTEND_DIR, 'index.html')
 
     return app

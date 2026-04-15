@@ -1,4 +1,4 @@
-"""Rota da API para sincronização em lote (/api/sync)."""
+"""Rota da API para sincronizacao em lote (/api/sync)."""
 
 import base64
 import json
@@ -19,7 +19,6 @@ def _save_base64_image(base64_data):
     if not base64_data:
         return None
 
-    # Strip data URI prefix if present (e.g. "data:image/jpeg;base64,...")
     if ',' in base64_data:
         base64_data = base64_data.split(',', 1)[1]
 
@@ -42,7 +41,6 @@ def _parse_created_at(value):
     if not value:
         return datetime.utcnow()
     try:
-        # Handle trailing Z (UTC indicator)
         if isinstance(value, str) and value.endswith('Z'):
             value = value[:-1] + '+00:00'
         return datetime.fromisoformat(value).replace(tzinfo=None)
@@ -50,48 +48,85 @@ def _parse_created_at(value):
         return datetime.utcnow()
 
 
-def _sync_form(item_id, data, created_at):
-    """Cria um registro Form a partir dos dados de sincronização."""
-    actions = data.get('actions', [])
+def _parse_actions(raw_actions):
+    if raw_actions is None:
+        raise ValueError("Campo 'actions' e obrigatorio")
+
+    actions = raw_actions
     if isinstance(actions, str):
         try:
             actions = json.loads(actions)
         except (json.JSONDecodeError, TypeError):
-            actions = [actions]
+            actions = [actions] if actions else []
 
+    if not isinstance(actions, list):
+        actions = [actions]
+
+    normalized = [str(action).strip() for action in actions if str(action).strip()]
+    if not normalized:
+        raise ValueError("Ao menos uma acao deve ser selecionada")
+    return normalized
+
+
+def _parse_people_served(raw_value):
+    if raw_value is None or raw_value == '':
+        return 1
+    try:
+        value = int(raw_value)
+    except (ValueError, TypeError):
+        raise ValueError("Campo 'people_served' deve ser um inteiro")
+    if value < 1:
+        raise ValueError("Campo 'people_served' deve ser maior que zero")
+    return value
+
+
+def _parse_age(raw_value):
+    if raw_value is None or raw_value == '':
+        return None
+    try:
+        return int(raw_value)
+    except (ValueError, TypeError):
+        raise ValueError("Campo 'age' deve ser um inteiro")
+
+
+def _sync_form(item_id, data, created_at):
+    volunteer_name = str(data.get('volunteer_name', '')).strip()
+    if not volunteer_name:
+        raise ValueError("Campo 'volunteer_name' e obrigatorio")
+
+    actions = _parse_actions(data.get('actions'))
     image_path = _save_base64_image(data.get('image'))
-
-    age = data.get('age')
-    age_int = None
-    if age is not None and age != '':
-        try:
-            age_int = int(age)
-        except (ValueError, TypeError):
-            age_int = None
 
     form = Form(
         id=item_id,
-        volunteer_name=data.get('volunteer_name', ''),
-        actions=actions if isinstance(actions, list) else [actions],
+        volunteer_name=volunteer_name,
+        actions=actions,
         full_name=data.get('full_name'),
-        age=age_int,
+        age=_parse_age(data.get('age')),
         locality=data.get('locality'),
         description=data.get('description'),
         image_path=image_path,
-        people_served=int(data.get('people_served', 1) or 1),
+        people_served=_parse_people_served(data.get('people_served')),
         created_at=created_at,
     )
     db.session.add(form)
 
 
 def _sync_post(item_id, data, created_at):
-    """Cria um registro Post a partir dos dados de sincronização."""
+    volunteer_name = str(data.get('volunteer_name', '')).strip()
+    title = str(data.get('title', '')).strip()
+
+    if not volunteer_name:
+        raise ValueError("Campo 'volunteer_name' e obrigatorio")
+    if not title:
+        raise ValueError("Campo 'title' e obrigatorio")
+
     image_path = _save_base64_image(data.get('image'))
 
     post = Post(
         id=item_id,
-        volunteer_name=data.get('volunteer_name', ''),
-        title=data.get('title', ''),
+        volunteer_name=volunteer_name,
+        title=title,
         description=data.get('description'),
         image_path=image_path,
         created_at=created_at,
@@ -100,12 +135,15 @@ def _sync_post(item_id, data, created_at):
 
 
 def _sync_receipt(item_id, data, created_at):
-    """Cria um registro Receipt a partir dos dados de sincronização."""
+    title = str(data.get('title', '')).strip()
+    if not title:
+        raise ValueError("Campo 'title' e obrigatorio")
+
     image_path = _save_base64_image(data.get('image'))
 
     receipt = Receipt(
         id=item_id,
-        title=data.get('title', ''),
+        title=title,
         description=data.get('description'),
         image_path=image_path,
         created_at=created_at,
@@ -113,7 +151,6 @@ def _sync_receipt(item_id, data, created_at):
     db.session.add(receipt)
 
 
-# Map type names to their handler and model
 _TYPE_HANDLERS = {
     'form': (_sync_form, Form),
     'post': (_sync_post, Post),
@@ -127,7 +164,7 @@ def batch_sync():
     try:
         body = request.get_json(silent=True)
         if not body or 'items' not in body:
-            return jsonify({"error": "Campo 'items' é obrigatório"}), 400
+            return jsonify({"error": "Campo 'items' e obrigatorio"}), 400
 
         items = body['items']
         if not isinstance(items, list):
@@ -143,16 +180,14 @@ def batch_sync():
             created_at_raw = item.get('created_at')
 
             if not item_id:
-                errors.append({"id": item_id, "error": "Campo 'id' é obrigatório"})
+                errors.append({"id": item_id, "error": "Campo 'id' e obrigatorio"})
                 continue
 
             if item_type not in _TYPE_HANDLERS:
-                errors.append({"id": item_id, "error": f"Tipo '{item_type}' não suportado"})
+                errors.append({"id": item_id, "error": f"Tipo '{item_type}' nao suportado"})
                 continue
 
             handler, model = _TYPE_HANDLERS[item_type]
-
-            # Check for duplicate — already exists in DB
             existing = db.session.get(model, item_id)
             if existing:
                 synced.append(item_id)
