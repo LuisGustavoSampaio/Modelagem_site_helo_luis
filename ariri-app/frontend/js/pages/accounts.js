@@ -35,7 +35,7 @@
     container.innerHTML =
       '<div class="page-top-bar">' +
         '<button class="back-circle-btn" id="acc-back">' + backSvg + '</button>' +
-        '<img src="assets/logo.png" alt="IPRA no Ariri" class="page-top-logo" onerror="this.style.display=\'none\'">' +
+        '<div class="page-top-brand" aria-label="Mackenzie"><span class="page-top-brand-kicker">UPM</span><span class="page-top-brand-title">Mackenzie</span></div>' +
       '</div>' +
       '<h2 class="form-page-title">Prestacao de contas:</h2>' +
       '<div class="detail-cards">' +
