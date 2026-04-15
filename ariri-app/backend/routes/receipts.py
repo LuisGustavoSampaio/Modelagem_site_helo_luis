@@ -25,6 +25,8 @@ def _build_image_url(image_path):
 def create_receipt():
     """Recebe comprovante via multipart/form-data e salva no banco."""
     try:
+        volunteer_name = request.form.get('volunteer_name')
+        owner_key = request.form.get('owner_key')
         title = request.form.get('title')
         if not title:
             return jsonify({"error": "title é obrigatório"}), 400
@@ -47,6 +49,8 @@ def create_receipt():
 
         receipt = Receipt(
             id=receipt_id,
+            volunteer_name=volunteer_name,
+            owner_key=owner_key,
             title=title,
             description=description,
             image_path=image_path,
@@ -57,6 +61,8 @@ def create_receipt():
 
         return jsonify({
             "id": receipt.id,
+            "volunteer_name": receipt.volunteer_name,
+            "owner_key": receipt.owner_key,
             "title": receipt.title,
             "description": receipt.description,
             "image_path": receipt.image_path,
@@ -73,11 +79,24 @@ def create_receipt():
 def list_receipts():
     """Lista todos os comprovantes ordenados por created_at decrescente."""
     try:
-        receipts = Receipt.query.order_by(Receipt.created_at.desc()).all()
+        volunteer_name = request.args.get('volunteer_name', '').strip()
+        owner_key = request.args.get('owner_key', '').strip()
+
+        query = Receipt.query
+        if owner_key:
+            query = query.filter(Receipt.owner_key == owner_key)
+        elif volunteer_name:
+            query = query.filter(Receipt.volunteer_name == volunteer_name)
+        else:
+            return jsonify([]), 200
+
+        receipts = query.order_by(Receipt.created_at.desc()).all()
         result = []
         for r in receipts:
             result.append({
                 "id": r.id,
+                "volunteer_name": r.volunteer_name,
+                "owner_key": r.owner_key,
                 "title": r.title,
                 "description": r.description,
                 "image_path": r.image_path,

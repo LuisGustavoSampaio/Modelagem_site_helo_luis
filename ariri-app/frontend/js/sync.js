@@ -274,6 +274,8 @@ const Sync = (() => {
               } else if (item.type === 'receipt') {
                 upsertCachedListItem('receipts', {
                   id: item.id,
+                  volunteer_name: item.data && item.data.volunteer_name,
+                  owner_key: item.data && item.data.owner_key,
                   title: item.data && item.data.title,
                   description: item.data && item.data.description,
                   created_at: item.created_at

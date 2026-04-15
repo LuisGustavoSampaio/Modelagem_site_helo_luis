@@ -144,6 +144,8 @@ def _sync_receipt(item_id, data, created_at):
 
     receipt = Receipt(
         id=item_id,
+        volunteer_name=data.get('volunteer_name'),
+        owner_key=data.get('owner_key'),
         title=title,
         description=data.get('description'),
         image_path=image_path,

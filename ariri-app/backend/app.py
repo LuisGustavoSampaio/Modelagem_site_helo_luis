@@ -102,6 +102,15 @@ def _ensure_runtime_schema():
       db.session.execute(text('ALTER TABLE post ADD COLUMN owner_key VARCHAR(64)'))
       db.session.commit()
 
+    if 'receipt' in table_names:
+      receipt_columns = {column['name'] for column in inspector.get_columns('receipt')}
+      if 'volunteer_name' not in receipt_columns:
+        db.session.execute(text('ALTER TABLE receipt ADD COLUMN volunteer_name VARCHAR(100)'))
+        db.session.commit()
+      if 'owner_key' not in receipt_columns:
+        db.session.execute(text('ALTER TABLE receipt ADD COLUMN owner_key VARCHAR(64)'))
+        db.session.commit()
+
 
 def _register_blueprints(app):
     """Register route blueprints. Skips any that aren't implemented yet."""

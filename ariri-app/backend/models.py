@@ -36,6 +36,8 @@ class Receipt(db.Model):
     """Comprovante de prestação de contas."""
 
     id = db.Column(db.String(36), primary_key=True)  # UUID
+    volunteer_name = db.Column(db.String(100))
+    owner_key = db.Column(db.String(64))
     title = db.Column(db.String(300), nullable=False)
     description = db.Column(db.Text)
     image_path = db.Column(db.String(500))

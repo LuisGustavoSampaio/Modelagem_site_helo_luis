@@ -78,13 +78,14 @@
     var title = document.getElementById('rec-title').value.trim();
     var desc = document.getElementById('rec-desc').value.trim();
     var imgIn = document.getElementById('rec-img'), imgFile = imgIn.files && imgIn.files[0];
+    var volunteerName = (localStorage.getItem('volunteer_name') || '').trim();
 
     if (!title) { tErr.classList.remove('hidden'); return; }
     tErr.classList.add('hidden');
     btn.disabled = true; btn.textContent = 'Enviando...';
 
     var check = (window.Sync && window.Sync.ping) ? window.Sync.ping() : Promise.resolve(false);
-    check.then(function (on) { return on ? sendOn(title, desc, imgFile) : saveOff(title, desc, imgFile); })
+    check.then(function (on) { return on ? sendOn(volunteerName, title, desc, imgFile) : saveOff(volunteerName, title, desc, imgFile); })
       .then(function () { toast('Comprovante enviado!', false); window.location.hash = '#/menu/accounts'; })
       .catch(function (err) {
         console.error('Receipt submit error:', err);
@@ -97,20 +98,26 @@
       });
   }
 
-  function sendOn(title, desc, imgFile) {
+  function sendOn(volunteerName, title, desc, imgFile) {
     var base = window.Sync ? window.Sync.getServerUrl() : '';
+    var ownerKey = window.Sync && window.Sync.getOwnerKeyForVolunteer
+      ? window.Sync.getOwnerKeyForVolunteer(volunteerName)
+      : '';
     var ip = (imgFile && window.resizeImage) ? window.resizeImage(imgFile) : Promise.resolve(imgFile);
     return ip.then(function (p) {
-      var fd = new FormData(); fd.append('title', title); fd.append('description', desc);
+      var fd = new FormData(); fd.append('volunteer_name', volunteerName); fd.append('owner_key', ownerKey); fd.append('title', title); fd.append('description', desc);
       if (p) fd.append('image', p, 'image.jpg');
       return fetch(base + '/api/receipts', { method: 'POST', body: fd }).then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); });
     });
   }
 
-  function saveOff(title, desc, imgFile) {
+  function saveOff(volunteerName, title, desc, imgFile) {
+    var ownerKey = window.Sync && window.Sync.getOwnerKeyForVolunteer
+      ? window.Sync.getOwnerKeyForVolunteer(volunteerName)
+      : '';
     var rp = (imgFile && window.resizeImage) ? window.resizeImage(imgFile) : Promise.resolve(imgFile);
     return rp.then(function (p) { var dp = p ? readB64(p) : Promise.resolve(null); return dp.then(function (b64) {
-      return window.DB.addPending('pending_receipts', { type: 'receipt', data: { title: title, description: desc, image: b64 } });
+      return window.DB.addPending('pending_receipts', { type: 'receipt', data: { volunteer_name: volunteerName, owner_key: ownerKey, title: title, description: desc, image: b64 } });
     }); });
   }
 })();

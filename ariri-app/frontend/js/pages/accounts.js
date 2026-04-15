@@ -54,10 +54,14 @@
     document.getElementById('new-rec-card').addEventListener('click', function () { window.location.hash = '#/menu/accounts/new'; });
 
     var base = window.Sync ? window.Sync.getServerUrl() : '';
+    var volunteerName = (localStorage.getItem('volunteer_name') || '').trim();
+    var ownerKey = window.Sync && window.Sync.getOwnerKeyForVolunteer
+      ? window.Sync.getOwnerKeyForVolunteer(volunteerName)
+      : '';
     var listEl = document.getElementById('rec-list');
     var loadEl = document.getElementById('rec-load');
 
-    fetch(base + '/api/receipts')
+    fetch(base + '/api/receipts?volunteer_name=' + encodeURIComponent(volunteerName) + '&owner_key=' + encodeURIComponent(ownerKey))
       .then(function (r) { if (!r.ok) throw new Error('err'); return r.json(); })
       .then(function (recs) {
         if (window.Sync && window.Sync.cacheApiData) {
