@@ -200,8 +200,8 @@
       }
 
       removeLocal.then(function () {
-        return fetch(base + '/api/posts/' + encodeURIComponent(postId), {
-          method: 'DELETE',
+        return fetch(base + '/api/posts/' + encodeURIComponent(postId) + '/delete', {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ volunteer_name: currentVolunteer })
         });

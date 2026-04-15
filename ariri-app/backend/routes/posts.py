@@ -97,8 +97,7 @@ def list_posts():
         return jsonify({"error": str(e)}), 500
 
 
-@posts_bp.route('/api/posts/<post_id>', methods=['DELETE'])
-def delete_post(post_id):
+def _delete_post_impl(post_id):
     """Exclui uma postagem apenas se o nome informado corresponder ao autor."""
     try:
         body = request.get_json(silent=True) or {}
@@ -130,3 +129,13 @@ def delete_post(post_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+
+@posts_bp.route('/api/posts/<post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    return _delete_post_impl(post_id)
+
+
+@posts_bp.route('/api/posts/<post_id>/delete', methods=['POST'])
+def delete_post_via_post(post_id):
+    return _delete_post_impl(post_id)
