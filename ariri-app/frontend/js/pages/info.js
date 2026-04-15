@@ -1,10 +1,10 @@
 (function () {
   'use strict';
   var DAYS = [
-    { id: 'sabado', label: 'Sábado:' },
-    { id: 'domingo', label: 'Domingo:' },
-    { id: 'segunda', label: 'Segunda:' },
-    { id: 'terca', label: 'Terça:' }
+    { id: 'sabado', label: 'Sábado:', shortLabel: 'Sab' },
+    { id: 'domingo', label: 'Domingo:', shortLabel: 'Dom' },
+    { id: 'segunda', label: 'Segunda:', shortLabel: 'Seg' },
+    { id: 'terca', label: 'Terça:', shortLabel: 'Ter' }
   ];
 
   window.renderInfoPage = function (container) {
@@ -17,6 +17,7 @@
     for (var i = 0; i < DAYS.length; i++) {
       html += '<div class="info-day-card" data-day="' + DAYS[i].id + '" role="button" tabindex="0">' +
         '<div class="info-day-card-inner">' +
+          '<span class="info-day-block">' + DAYS[i].shortLabel + '</span>' +
           '<div class="info-day-copy">' +
             '<span class="info-day-kicker">Programacao</span>' +
             '<span class="info-day-label">' + DAYS[i].label + '</span>' +

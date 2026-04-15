@@ -461,10 +461,27 @@ body {
   padding: 20px;
 }
 
+.info-day-block {
+  width: 56px;
+  height: 56px;
+  border-radius: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(180deg, #d41435 0%, #b70f2a 100%);
+  color: var(--white);
+  font-size: 15px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  box-shadow: 0 12px 22px rgba(163, 13, 38, 0.18);
+  flex-shrink: 0;
+}
+
 .info-day-copy {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  flex: 1;
 }
 
 .info-day-kicker {
