@@ -119,22 +119,14 @@
     var loadingEl = document.getElementById('diary-loading');
 
     Promise.all([
-      fetch(base + '/api/posts')
-        .then(function (res) {
-          if (!res.ok) throw new Error('err');
-          return res.json();
-        })
-        .then(function (posts) {
-          if (window.Sync && window.Sync.replaceCachedListIfUseful) {
-            return window.Sync.replaceCachedListIfUseful('posts', posts || []);
-          }
-          return posts || [];
-        })
-        .catch(function () {
-          return window.Sync && window.Sync.getCachedApiData
-            ? (window.Sync.getCachedApiData('posts') || [])
-            : [];
-        }),
+      window.Sync && window.Sync.fetchJsonWithCache
+        ? window.Sync.fetchJsonWithCache('/api/posts', 'posts', 2500)
+        : fetch(base + '/api/posts')
+            .then(function (res) {
+              if (!res.ok) throw new Error('err');
+              return res.json();
+            })
+            .catch(function () { return []; }),
       loadPendingPosts()
     ]).then(function (results) {
       var onlinePosts = results[0] || [];

@@ -210,22 +210,14 @@
     var loadingEl = document.getElementById('forms-loading');
 
     Promise.all([
-      fetch(base + '/api/forms')
-        .then(function (res) {
-          if (!res.ok) throw new Error('err');
-          return res.json();
-        })
-        .then(function (forms) {
-          if (window.Sync && window.Sync.replaceCachedListIfUseful) {
-            return window.Sync.replaceCachedListIfUseful('forms', forms || []);
-          }
-          return forms || [];
-        })
-        .catch(function () {
-          return window.Sync && window.Sync.getCachedApiData
-            ? (window.Sync.getCachedApiData('forms') || [])
-            : [];
-        }),
+      window.Sync && window.Sync.fetchJsonWithCache
+        ? window.Sync.fetchJsonWithCache('/api/forms', 'forms', 2500)
+        : fetch(base + '/api/forms')
+            .then(function (res) {
+              if (!res.ok) throw new Error('err');
+              return res.json();
+            })
+            .catch(function () { return []; }),
       loadPendingForms()
     ]).then(function (results) {
       var syncedForms = results[0] || [];

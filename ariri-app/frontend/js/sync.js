@@ -63,6 +63,30 @@ const Sync = (() => {
     return nextList;
   }
 
+  function fetchJsonWithCache(path, cacheKey, timeoutMs) {
+    var ms = typeof timeoutMs === 'number' ? timeoutMs : 4000;
+
+    if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+      return Promise.resolve(getCachedApiData(cacheKey) || []);
+    }
+
+    return Promise.race([
+      fetch(getServerUrl() + path).then(function (res) {
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        return res.json();
+      }),
+      new Promise(function (_, reject) {
+        setTimeout(function () {
+          reject(new Error('timeout'));
+        }, ms);
+      })
+    ]).then(function (items) {
+      return replaceCachedListIfUseful(cacheKey, items || []);
+    }).catch(function () {
+      return getCachedApiData(cacheKey) || [];
+    });
+  }
+
   function _updateIndicator(status) {
     var el = document.getElementById('connectivity-indicator');
     if (!el) return;
@@ -212,7 +236,8 @@ const Sync = (() => {
     cacheApiData: cacheApiData,
     getCachedApiData: getCachedApiData,
     appendCachedListItem: appendCachedListItem,
-    replaceCachedListIfUseful: replaceCachedListIfUseful
+    replaceCachedListIfUseful: replaceCachedListIfUseful,
+    fetchJsonWithCache: fetchJsonWithCache
   };
 })();
 
