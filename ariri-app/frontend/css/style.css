@@ -513,6 +513,54 @@ body {
   flex-shrink: 0;
 }
 
+.info-day-card-sabado {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(252, 232, 236, 0.98) 100%);
+}
+
+.info-day-card-domingo {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(255, 239, 244, 0.98) 100%);
+}
+
+.info-day-card-segunda {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(245, 230, 234, 0.98) 100%);
+}
+
+.info-day-card-terca {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(250, 226, 231, 0.98) 100%);
+}
+
+.info-day-block-sabado {
+  background: linear-gradient(180deg, #d41435 0%, #b70f2a 100%);
+}
+
+.info-day-block-domingo {
+  background: linear-gradient(180deg, #b70f2a 0%, #8f0d23 100%);
+}
+
+.info-day-block-segunda {
+  background: linear-gradient(180deg, #cf3a54 0%, #b51f3a 100%);
+}
+
+.info-day-block-terca {
+  background: linear-gradient(180deg, #9d2235 0%, #7c1728 100%);
+}
+
+.info-day-arrow-sabado {
+  background: rgba(212, 20, 53, 0.1);
+}
+
+.info-day-arrow-domingo {
+  background: rgba(183, 15, 42, 0.12);
+}
+
+.info-day-arrow-segunda {
+  background: rgba(207, 58, 84, 0.12);
+}
+
+.info-day-arrow-terca {
+  background: rgba(157, 34, 53, 0.12);
+}
+
 /* ============================================
    New Form Card + Add Circle Button
    ============================================ */

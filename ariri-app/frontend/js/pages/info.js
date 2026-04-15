@@ -15,14 +15,14 @@
       '</div>' +
       '<div class="info-cards">';
     for (var i = 0; i < DAYS.length; i++) {
-      html += '<div class="info-day-card" data-day="' + DAYS[i].id + '" role="button" tabindex="0">' +
+      html += '<div class="info-day-card info-day-card-' + DAYS[i].id + '" data-day="' + DAYS[i].id + '" role="button" tabindex="0">' +
         '<div class="info-day-card-inner">' +
-          '<span class="info-day-block">' + DAYS[i].shortLabel + '</span>' +
+          '<span class="info-day-block info-day-block-' + DAYS[i].id + '">' + DAYS[i].shortLabel + '</span>' +
           '<div class="info-day-copy">' +
             '<span class="info-day-kicker">Programacao</span>' +
             '<span class="info-day-label">' + DAYS[i].label + '</span>' +
           '</div>' +
-          '<span class="info-day-arrow" aria-hidden="true">&rarr;</span>' +
+          '<span class="info-day-arrow info-day-arrow-' + DAYS[i].id + '" aria-hidden="true">&rarr;</span>' +
         '</div></div>';
     }
     html += '</div>';
