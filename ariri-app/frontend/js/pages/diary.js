@@ -70,30 +70,33 @@
     return Object.keys(byId).map(function (id) { return byId[id]; });
   }
 
-  function buildPostCard(post, baseUrl) {
+  function buildPostCard(post, baseUrl, currentVolunteer) {
     var authorName = post.volunteer_name || 'Anonimo';
     var dateStr = formatDate(post.created_at);
     var pendingBadge = post.pending_sync
       ? '<span class="sync-pending-badge">Aguardando conexao</span>'
       : '';
     var imageSrc = post.image_url || (post.image_path ? (baseUrl + '/uploads/' + post.image_path) : '');
+    var canDelete = currentVolunteer && authorName === currentVolunteer;
 
     var imageHtml = '';
     if (imageSrc) {
       imageHtml =
         '<button class="diary-post-media" type="button" aria-label="Ampliar imagem da postagem" ' +
-          'data-image-src="' + escapeAttr(imageSrc) + '" ' +
-          'data-image-title="' + escapeAttr(post.title || 'Postagem') + '" ' +
-          'data-image-author="' + escapeAttr(authorName) + '" ' +
-          'data-image-date="' + escapeAttr(dateStr) + '">' +
+          'data-image-src="' + escapeAttr(imageSrc) + '">' +
           '<img class="diary-post-image" src="' + imageSrc + '" alt="Imagem da postagem" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.style.display=\'none\'">' +
         '</button>';
     }
 
     return '<article class="diary-post-card' + (post.pending_sync ? ' pending-sync' : '') + '">' +
       '<div class="diary-post-header">' +
-        '<span class="diary-post-author">' + authorName + '</span>' +
-        '<span class="diary-post-date">' + dateStr + '</span>' +
+        '<div class="diary-post-header-main">' +
+          '<span class="diary-post-author">' + authorName + '</span>' +
+          '<span class="diary-post-date">' + dateStr + '</span>' +
+        '</div>' +
+        (canDelete
+          ? '<button class="diary-post-delete" type="button" data-delete-post="' + escapeAttr(post.id) + '" data-pending-sync="' + (post.pending_sync ? 'true' : 'false') + '" aria-label="Excluir postagem">Excluir</button>'
+          : '') +
       '</div>' +
       (pendingBadge ? '<div class="diary-pending-badge-row">' + pendingBadge + '</div>' : '') +
       imageHtml +
@@ -104,7 +107,7 @@
     '</article>';
   }
 
-  function renderPosts(feedEl, posts, base) {
+  function renderPosts(feedEl, posts, base, currentVolunteer) {
     if (!posts || posts.length === 0) {
       feedEl.innerHTML =
         '<div class="empty-state">' +
@@ -114,7 +117,7 @@
     }
 
     var feedHtml = '<div class="diary-feed-list">';
-    posts.forEach(function (post) { feedHtml += buildPostCard(post, base); });
+    posts.forEach(function (post) { feedHtml += buildPostCard(post, base, currentVolunteer); });
     feedHtml += '</div>';
     feedEl.innerHTML = feedHtml;
   }
@@ -140,7 +143,7 @@
               '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>' +
             '</button>' +
           '</div>' +
-      '</div>' +
+        '</div>' +
       '</div>' +
       '<div id="diary-feed" class="mt-16"></div>' +
       '<div id="diary-loading" class="text-center mt-24"><div class="spinner"></div></div>' +
@@ -156,22 +159,65 @@
     var lightboxEl = document.getElementById('diary-lightbox');
     var lightboxImageEl = document.getElementById('diary-lightbox-image');
     var lightboxCloseEl = document.getElementById('diary-lightbox-close');
+    var base = window.Sync ? window.Sync.getServerUrl() : '';
+    var currentVolunteer = (localStorage.getItem('volunteer_name') || '').trim();
+    var feedEl = document.getElementById('diary-feed');
+    var loadingEl = document.getElementById('diary-loading');
+    var initialPendingPosts = [];
+
     function goNew() { window.location.hash = '#/diary/new'; }
+
     function closeLightbox() {
       lightboxEl.classList.add('hidden');
       lightboxEl.setAttribute('aria-hidden', 'true');
       lightboxImageEl.removeAttribute('src');
     }
+
     function openLightbox(trigger) {
       lightboxImageEl.src = trigger.getAttribute('data-image-src') || '';
       lightboxEl.classList.remove('hidden');
       lightboxEl.setAttribute('aria-hidden', 'false');
     }
 
+    function removePost(postId, isPendingOnly) {
+      if (!postId || !currentVolunteer) return;
+      if (!window.confirm('Deseja excluir esta postagem?')) return;
+
+      var removeLocal = Promise.resolve();
+      if (window.DB && window.DB.deletePending) {
+        removeLocal = window.DB.deletePending('pending_posts', postId).catch(function () {});
+      }
+
+      if (window.Sync && window.Sync.removeCachedListItem) {
+        window.Sync.removeCachedListItem('posts', postId);
+      }
+
+      if (isPendingOnly) {
+        removeLocal.then(function () {
+          window.dispatchEvent(new CustomEvent('app:data-changed'));
+        });
+        return;
+      }
+
+      removeLocal.then(function () {
+        return fetch(base + '/api/posts/' + encodeURIComponent(postId), {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ volunteer_name: currentVolunteer })
+        });
+      }).then(function (res) {
+        if (!res.ok) throw new Error('delete_failed');
+        window.dispatchEvent(new CustomEvent('app:data-changed'));
+      }).catch(function () {
+        window.alert('Nao foi possivel excluir esta postagem.');
+      });
+    }
+
     card.addEventListener('click', goNew);
     card.addEventListener('keydown', function (e) {
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goNew(); }
     });
+
     container.addEventListener('click', function (e) {
       var mediaTrigger = e.target.closest('.diary-post-media');
       if (mediaTrigger) {
@@ -179,10 +225,20 @@
         return;
       }
 
+      var deleteTrigger = e.target.closest('[data-delete-post]');
+      if (deleteTrigger) {
+        removePost(
+          deleteTrigger.getAttribute('data-delete-post'),
+          deleteTrigger.getAttribute('data-pending-sync') === 'true'
+        );
+        return;
+      }
+
       if (e.target.closest('[data-close-lightbox="true"]') || e.target.id === 'diary-lightbox-close') {
         closeLightbox();
       }
     });
+
     lightboxCloseEl.addEventListener('click', closeLightbox);
     container.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && lightboxEl && !lightboxEl.classList.contains('hidden')) {
@@ -190,16 +246,11 @@
       }
     });
 
-    var base = window.Sync ? window.Sync.getServerUrl() : '';
-    var feedEl = document.getElementById('diary-feed');
-    var loadingEl = document.getElementById('diary-loading');
-    var initialPendingPosts = [];
-
     loadPendingPosts().then(function (pendingPosts) {
       initialPendingPosts = pendingPosts || [];
       if (initialPendingPosts.length > 0) {
         loadingEl.classList.add('hidden');
-        renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts])), base);
+        renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts])), base, currentVolunteer);
       }
 
       return window.Sync && window.Sync.fetchJsonWithCache
@@ -212,11 +263,11 @@
             .catch(function () { return []; });
     }).then(function (onlinePosts) {
       loadingEl.classList.add('hidden');
-      renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts, onlinePosts || []])), base);
+      renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts, onlinePosts || []])), base, currentVolunteer);
     }).catch(function () {
       loadingEl.classList.add('hidden');
       if (initialPendingPosts.length > 0) {
-        renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts])), base);
+        renderPosts(feedEl, sortPostsDescending(mergePosts([initialPendingPosts])), base, currentVolunteer);
         return;
       }
       feedEl.innerHTML =

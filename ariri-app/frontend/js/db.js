@@ -148,7 +148,20 @@ const DB = (() => {
     });
   }
 
-  return { init, addPending, getPending, markSynced, clearSynced };
+  function deletePending(store, id) {
+    return init().then((db) => {
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction(store, 'readwrite');
+        const os = tx.objectStore(store);
+        const req = os.delete(id);
+
+        req.onsuccess = () => resolve();
+        req.onerror = (e) => reject(new Error('deletePending failed: ' + e.target.error));
+      });
+    });
+  }
+
+  return { init, addPending, getPending, markSynced, clearSynced, deletePending };
 })();
 
 window.DB = DB;

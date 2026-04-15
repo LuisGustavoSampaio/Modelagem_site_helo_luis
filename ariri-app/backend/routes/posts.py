@@ -95,3 +95,38 @@ def list_posts():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+
+@posts_bp.route('/api/posts/<post_id>', methods=['DELETE'])
+def delete_post(post_id):
+    """Exclui uma postagem apenas se o nome informado corresponder ao autor."""
+    try:
+        body = request.get_json(silent=True) or {}
+        volunteer_name = str(body.get('volunteer_name', '')).strip()
+        if not volunteer_name:
+            return jsonify({"error": "volunteer_name e obrigatorio"}), 400
+
+        post = db.session.get(Post, post_id)
+        if not post:
+            return jsonify({"error": "Postagem nao encontrada"}), 404
+
+        if (post.volunteer_name or '').strip() != volunteer_name:
+            return jsonify({"error": "Voce nao pode excluir a postagem de outra pessoa"}), 403
+
+        image_path = post.image_path
+        db.session.delete(post)
+        db.session.commit()
+
+        if image_path:
+            uploads_dir = current_app.config['UPLOADS_DIR']
+            image_file = os.path.join(uploads_dir, image_path)
+            if os.path.isfile(image_file):
+                try:
+                    os.remove(image_file)
+                except OSError:
+                    pass
+
+        return jsonify({"status": "ok", "deleted_id": post_id}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500

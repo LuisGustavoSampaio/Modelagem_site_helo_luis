@@ -101,6 +101,16 @@ const Sync = (() => {
     return next;
   }
 
+  function removeCachedListItem(key, id) {
+    var current = getCachedApiData(key);
+    var list = Array.isArray(current) ? current.slice() : [];
+    var next = list.filter(function (entry) {
+      return !entry || entry.id !== id;
+    });
+    cacheApiData(key, next);
+    return next;
+  }
+
   function replaceCachedListIfUseful(key, items) {
     var current = getCachedApiData(key);
     var currentList = Array.isArray(current) ? current : [];
@@ -318,6 +328,7 @@ const Sync = (() => {
     getCachedApiData: getCachedApiData,
     appendCachedListItem: appendCachedListItem,
     upsertCachedListItem: upsertCachedListItem,
+    removeCachedListItem: removeCachedListItem,
     replaceCachedListIfUseful: replaceCachedListIfUseful,
     fetchJsonWithCache: fetchJsonWithCache
   };
