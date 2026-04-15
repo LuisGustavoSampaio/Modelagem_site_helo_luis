@@ -369,7 +369,9 @@
       console.error('IndexedDB init failed:', err);
     });
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(function (err) {
+      navigator.serviceWorker.register('sw.js').then(function (registration) {
+        registration.update();
+      }).catch(function (err) {
         console.error('Service worker registration failed:', err);
       });
     }

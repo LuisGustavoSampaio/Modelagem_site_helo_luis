@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'ariri-static-v1';
+const STATIC_CACHE = 'ariri-static-v2';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -49,24 +49,28 @@ self.addEventListener('fetch', (event) => {
 
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request).catch(() => caches.match('/index.html'))
+      fetch(request)
+        .then((response) => {
+          const copy = response.clone();
+          caches.open(STATIC_CACHE).then((cache) => cache.put('/index.html', copy));
+          return response;
+        })
+        .catch(() => caches.match('/index.html'))
     );
     return;
   }
 
-  if (url.origin === self.location.origin) {
-    event.respondWith(
-      caches.match(request).then((cached) => {
-        if (cached) return cached;
+  if (url.origin !== self.location.origin) return;
 
-        return fetch(request).then((response) => {
-          if (!response || response.status !== 200) return response;
-
+  event.respondWith(
+    fetch(request)
+      .then((response) => {
+        if (response && response.status === 200) {
           const copy = response.clone();
           caches.open(STATIC_CACHE).then((cache) => cache.put(request, copy));
-          return response;
-        });
+        }
+        return response;
       })
-    );
-  }
+      .catch(() => caches.match(request))
+  );
 });
