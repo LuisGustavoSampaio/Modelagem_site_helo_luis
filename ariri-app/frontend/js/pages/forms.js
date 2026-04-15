@@ -1,19 +1,13 @@
 /**
- * forms.js — Página de Formulários e Dashboard
- *
- * Layout: logo (esquerda) + "Formulário" (direita) no topo.
- * Card "Novo formulário:" com botão + circular verde.
- * Card "Dashboard:" com gráficos de barras e pizza.
- *
- * Requisitos: 5.1, 6.1, 6.2, 6.3, 6.4
+ * forms.js - Pagina de Formularios e Dashboard
  */
 (function () {
   'use strict';
 
   var ACTION_TYPES = [
-    'Evangelismo', 'Visitação', 'Oração', 'Aconselhamento',
-    'Infantil', 'Manutenção', 'Auxílio ao MEAP', 'Cozinha',
-    'Educação', 'Odontologia', 'P. Socorros', 'Outros'
+    'Evangelismo', 'Visitacao', 'Oracao', 'Aconselhamento',
+    'Infantil', 'Manutencao', 'Auxilio ao MEAP', 'Cozinha',
+    'Educacao', 'Odontologia', 'P. Socorros', 'Outros'
   ];
 
   var PIE_COLORS = [
@@ -22,13 +16,50 @@
     '#f9a825', '#ff8f00', '#d32f2f', '#7b1fa2'
   ];
 
+  function formatDate(isoStr) {
+    if (!isoStr) return '';
+    try {
+      var d = new Date(isoStr);
+      if (isNaN(d.getTime())) return isoStr;
+      return String(d.getDate()).padStart(2, '0') + '/' +
+        String(d.getMonth() + 1).padStart(2, '0') + '/' +
+        d.getFullYear() + ' ' +
+        String(d.getHours()).padStart(2, '0') + ':' +
+        String(d.getMinutes()).padStart(2, '0');
+    } catch (e) { return isoStr; }
+  }
+
+  function normalizeAction(action) {
+    var map = {
+      'Visitação': 'Visitacao',
+      'Oração': 'Oracao',
+      'Manutenção': 'Manutencao',
+      'Educação': 'Educacao',
+      'Auxílio ao MEAP': 'Auxilio ao MEAP'
+    };
+    return map[action] || action;
+  }
+
+  function normalizePendingForm(item) {
+    return {
+      id: item.id,
+      volunteer_name: item.data && item.data.volunteer_name,
+      actions: ((item.data && item.data.actions) || []).map(normalizeAction),
+      description: item.data && item.data.description,
+      people_served: item.data && item.data.people_served,
+      created_at: item.created_at,
+      pending_sync: true
+    };
+  }
+
   function aggregateActions(forms) {
     var counts = {};
     var total = 0;
     ACTION_TYPES.forEach(function (a) { counts[a] = 0; });
     forms.forEach(function (form) {
       (form.actions || []).forEach(function (a) {
-        if (counts[a] !== undefined) { counts[a]++; total++; }
+        var key = normalizeAction(a);
+        if (counts[key] !== undefined) { counts[key]++; total++; }
       });
     });
     return { counts: counts, total: total };
@@ -88,7 +119,6 @@
     var maxCount = 0;
     ACTION_TYPES.forEach(function (a) { if (agg.counts[a] > maxCount) maxCount = agg.counts[a]; });
 
-    // Calculate total people impacted
     var totalPeople = 0;
     forms.forEach(function (f) {
       totalPeople += (f.people_served || 1);
@@ -111,17 +141,51 @@
     '</div>';
   }
 
+  function buildPendingFormsCard(forms) {
+    if (!forms || forms.length === 0) return '';
+
+    var html = '<div class="detail-card">' +
+      '<div class="pending-item-header" style="margin-bottom:12px">' +
+        '<p class="detail-card-label" style="margin-bottom:0">Envios pendentes</p>' +
+        '<span class="sync-pending-badge">Aguardando conexao</span>' +
+      '</div>' +
+      '<div class="pending-list">';
+
+    forms.forEach(function (form) {
+      var actions = (form.actions || []).join(', ') || 'Sem acao informada';
+      html += '<div class="pending-item">' +
+        '<div class="pending-item-header">' +
+          '<span class="pending-item-title">' + (form.volunteer_name || 'Formulario salvo offline') + '</span>' +
+          '<span class="pending-item-meta">' + formatDate(form.created_at) + '</span>' +
+        '</div>' +
+        '<div class="pending-item-actions"><strong>Acoes:</strong> ' + actions + '</div>' +
+        '<div class="pending-item-meta"><strong>Pessoas atendidas:</strong> ' + (form.people_served || 1) + '</div>' +
+        (form.description ? '<div class="pending-item-meta">' + form.description + '</div>' : '') +
+      '</div>';
+    });
+
+    html += '</div></div>';
+    return html;
+  }
+
+  function loadPendingForms() {
+    if (!window.DB || !window.DB.getPending) return Promise.resolve([]);
+    return window.DB.getPending('pending_forms')
+      .then(function (items) { return items.map(normalizePendingForm); })
+      .catch(function () { return []; });
+  }
+
   function renderFormsPage(container) {
     var html =
       '<div class="page-top-bar">' +
         '<img src="assets/logo.png" alt="IPRA no Ariri" class="page-top-logo" onerror="this.style.display=\'none\'">' +
-        '<h1 class="page-top-title">Formulário</h1>' +
+        '<h1 class="page-top-title">Formulario</h1>' +
       '</div>' +
       '<div class="detail-cards">' +
-        '<div class="detail-card new-form-card" id="new-form-card" role="button" tabindex="0" aria-label="Novo formulário">' +
+        '<div class="detail-card new-form-card" id="new-form-card" role="button" tabindex="0" aria-label="Novo formulario">' +
           '<div class="new-form-card-inner">' +
-            '<span class="detail-card-label" style="margin-bottom:0">Novo<br>formulário:</span>' +
-            '<button class="add-circle-btn" id="new-form-btn" aria-label="Adicionar formulário">' +
+            '<span class="detail-card-label" style="margin-bottom:0">Novo<br>formulario:</span>' +
+            '<button class="add-circle-btn" id="new-form-btn" aria-label="Adicionar formulario">' +
               '<svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" aria-hidden="true">' +
                 '<line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>' +
               '</svg>' +
@@ -134,7 +198,6 @@
 
     container.innerHTML = html;
 
-    // Wire up new form card
     var card = document.getElementById('new-form-card');
     function goNew() { window.location.hash = '#/forms/new'; }
     card.addEventListener('click', goNew);
@@ -142,38 +205,47 @@
       if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goNew(); }
     });
 
-    // Fetch forms
     var base = window.Sync ? window.Sync.getServerUrl() : '';
     var dashboardEl = document.getElementById('forms-dashboard');
     var loadingEl = document.getElementById('forms-loading');
 
-    fetch(base + '/api/forms')
-      .then(function (res) {
-        if (!res.ok) throw new Error('err');
-        return res.json();
-      })
-      .then(function (forms) {
-        if (window.Sync && window.Sync.cacheApiData) {
-          window.Sync.cacheApiData('forms', forms);
-        }
-        loadingEl.classList.add('hidden');
-        if (forms && forms.length > 0) {
-          dashboardEl.innerHTML = '<div class="detail-cards">' + buildDashboardCard(forms) + '</div>';
-        } else {
-          dashboardEl.innerHTML = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
-        }
-      })
-      .catch(function () {
-        var cachedForms = window.Sync && window.Sync.getCachedApiData
-          ? window.Sync.getCachedApiData('forms')
-          : null;
-        loadingEl.classList.add('hidden');
-        if (cachedForms && cachedForms.length > 0) {
-          dashboardEl.innerHTML = '<div class="detail-cards">' + buildDashboardCard(cachedForms) + '</div>';
-          return;
-        }
-        dashboardEl.innerHTML = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
-      });
+    Promise.all([
+      fetch(base + '/api/forms')
+        .then(function (res) {
+          if (!res.ok) throw new Error('err');
+          return res.json();
+        })
+        .then(function (forms) {
+          if (window.Sync && window.Sync.cacheApiData) {
+            window.Sync.cacheApiData('forms', forms);
+          }
+          return forms || [];
+        })
+        .catch(function () {
+          return window.Sync && window.Sync.getCachedApiData
+            ? (window.Sync.getCachedApiData('forms') || [])
+            : [];
+        }),
+      loadPendingForms()
+    ]).then(function (results) {
+      var syncedForms = results[0] || [];
+      var pendingForms = results[1] || [];
+      var allForms = syncedForms.concat(pendingForms);
+
+      loadingEl.classList.add('hidden');
+
+      var dashboardHtml = '';
+      if (allForms.length > 0) {
+        dashboardHtml += '<div class="detail-cards">' + buildDashboardCard(allForms) + buildPendingFormsCard(pendingForms) + '</div>';
+      } else {
+        dashboardHtml = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
+      }
+
+      dashboardEl.innerHTML = dashboardHtml;
+    }).catch(function () {
+      loadingEl.classList.add('hidden');
+      dashboardEl.innerHTML = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
+    });
   }
 
   window.renderFormsPage = renderFormsPage;

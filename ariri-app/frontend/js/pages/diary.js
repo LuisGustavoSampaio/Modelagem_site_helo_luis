@@ -1,12 +1,5 @@
 /**
  * diary.js - Pagina do Diario de Bordo
- *
- * Layout: logo (esquerda) + "Diario de Bordo" (direita) no topo.
- * Card "Nova postagem:" com botao + circular verde.
- * Feed de postagens sem avatar/foto de perfil.
- * Cada post: nome (esquerda) + data (direita), imagem, titulo, descricao.
- *
- * Requisitos: 7.1, 7.2
  */
 (function () {
   'use strict';
@@ -25,21 +18,44 @@
     } catch (e) { return isoStr; }
   }
 
+  function normalizePendingPost(item) {
+    return {
+      id: item.id,
+      volunteer_name: item.data && item.data.volunteer_name,
+      title: item.data && item.data.title,
+      description: item.data && item.data.description,
+      image_url: item.data && item.data.image,
+      created_at: item.created_at,
+      pending_sync: true
+    };
+  }
+
+  function sortPostsDescending(posts) {
+    return posts.sort(function (a, b) {
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
+    });
+  }
+
   function buildPostCard(post, baseUrl) {
     var authorName = post.volunteer_name || 'Anonimo';
     var dateStr = formatDate(post.created_at);
+    var pendingBadge = post.pending_sync
+      ? '<span class="sync-pending-badge">Aguardando conexao</span>'
+      : '';
 
     var imageHtml = '';
-    if (post.image_path) {
-      var imageUrl = baseUrl + '/uploads/' + post.image_path;
-      imageHtml = '<img class="diary-post-image" src="' + imageUrl + '" alt="Imagem da postagem" loading="lazy">';
+    if (post.image_url) {
+      imageHtml = '<img class="diary-post-image" src="' + post.image_url + '" alt="Imagem da postagem" loading="lazy">';
+    } else if (post.image_path) {
+      imageHtml = '<img class="diary-post-image" src="' + baseUrl + '/uploads/' + post.image_path + '" alt="Imagem da postagem" loading="lazy">';
     }
 
-    return '<article class="diary-post-card">' +
+    return '<article class="diary-post-card' + (post.pending_sync ? ' pending-sync' : '') + '">' +
       '<div class="diary-post-header">' +
         '<span class="diary-post-author">' + authorName + '</span>' +
         '<span class="diary-post-date">' + dateStr + '</span>' +
       '</div>' +
+      (pendingBadge ? '<div style="padding:12px 16px 0">' + pendingBadge + '</div>' : '') +
       imageHtml +
       '<div class="diary-post-body">' +
         '<h3 class="diary-post-title">' + (post.title || '') + '</h3>' +
@@ -61,6 +77,13 @@
     posts.forEach(function (post) { feedHtml += buildPostCard(post, base); });
     feedHtml += '</div>';
     feedEl.innerHTML = feedHtml;
+  }
+
+  function loadPendingPosts() {
+    if (!window.DB || !window.DB.getPending) return Promise.resolve([]);
+    return window.DB.getPending('pending_posts')
+      .then(function (items) { return items.map(normalizePendingPost); })
+      .catch(function () { return []; });
   }
 
   function renderDiaryPage(container) {
@@ -95,30 +118,34 @@
     var feedEl = document.getElementById('diary-feed');
     var loadingEl = document.getElementById('diary-loading');
 
-    fetch(base + '/api/posts')
-      .then(function (res) {
-        if (!res.ok) throw new Error('err');
-        return res.json();
-      })
-      .then(function (posts) {
-        if (window.Sync && window.Sync.cacheApiData) {
-          window.Sync.cacheApiData('posts', posts);
-        }
-        loadingEl.classList.add('hidden');
-        renderPosts(feedEl, posts, base);
-      })
-      .catch(function () {
-        var cachedPosts = window.Sync && window.Sync.getCachedApiData
-          ? window.Sync.getCachedApiData('posts')
-          : null;
-        loadingEl.classList.add('hidden');
-        if (cachedPosts && cachedPosts.length > 0) {
-          renderPosts(feedEl, cachedPosts, base);
-          return;
-        }
-        feedEl.innerHTML =
-          '<div class="empty-state"><p class="empty-state-text">Nao foi possivel carregar as postagens.</p></div>';
-      });
+    Promise.all([
+      fetch(base + '/api/posts')
+        .then(function (res) {
+          if (!res.ok) throw new Error('err');
+          return res.json();
+        })
+        .then(function (posts) {
+          if (window.Sync && window.Sync.cacheApiData) {
+            window.Sync.cacheApiData('posts', posts);
+          }
+          return posts || [];
+        })
+        .catch(function () {
+          return window.Sync && window.Sync.getCachedApiData
+            ? (window.Sync.getCachedApiData('posts') || [])
+            : [];
+        }),
+      loadPendingPosts()
+    ]).then(function (results) {
+      var onlinePosts = results[0] || [];
+      var pendingPosts = results[1] || [];
+      loadingEl.classList.add('hidden');
+      renderPosts(feedEl, sortPostsDescending(pendingPosts.concat(onlinePosts)), base);
+    }).catch(function () {
+      loadingEl.classList.add('hidden');
+      feedEl.innerHTML =
+        '<div class="empty-state"><p class="empty-state-text">Nao foi possivel carregar as postagens.</p></div>';
+    });
   }
 
   window.renderDiaryPage = renderDiaryPage;

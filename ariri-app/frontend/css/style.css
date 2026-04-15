@@ -870,6 +870,11 @@ body {
   box-shadow: var(--shadow);
 }
 
+.diary-post-card.pending-sync {
+  border: 2px dashed rgba(249, 168, 37, 0.7);
+  background: #fff8e6;
+}
+
 .diary-post-header {
   display: flex;
   align-items: center;
@@ -1223,6 +1228,67 @@ body {
 .detail-card-content {
   font-size: 14px;
   color: var(--text-primary);
+}
+
+.sync-pending-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(249, 168, 37, 0.16);
+  color: #9a6700;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.sync-pending-badge::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--warning);
+}
+
+.pending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.pending-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 10px;
+  border: 1px solid rgba(249, 168, 37, 0.35);
+}
+
+.pending-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.pending-item-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--green);
+}
+
+.pending-item-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.pending-item-actions {
+  font-size: 12px;
+  color: var(--text-secondary);
 }
 
 .day-detail-section {
