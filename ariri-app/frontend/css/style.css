@@ -258,12 +258,57 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
 }
 
 .splash-logo img {
   max-width: 320px;
   width: 85%;
   height: auto;
+}
+
+.mackenzie-mark {
+  width: min(100%, 360px);
+  padding: 28px 24px;
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(250, 233, 236, 0.96) 100%);
+  border: 1px solid rgba(200, 16, 46, 0.12);
+  box-shadow: 0 18px 40px rgba(163, 13, 38, 0.12);
+  text-align: center;
+}
+
+.mackenzie-mark-kicker {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--green);
+  margin-bottom: 12px;
+}
+
+.mackenzie-mark-title {
+  display: block;
+  font-size: 44px;
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -0.05em;
+  color: var(--green);
+  text-transform: uppercase;
+}
+
+.mackenzie-mark-subtitle {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: rgba(200, 16, 46, 0.08);
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 .splash-logo-text {

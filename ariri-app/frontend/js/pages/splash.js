@@ -17,8 +17,11 @@
       '<div class="splash-screen" id="splash-area" role="button" tabindex="0" aria-label="Toque para continuar">' +
         '<div class="splash-logo-area">' +
           '<div class="splash-logo">' +
-            '<img src="assets/logo.png" alt="IPRA no Ariri" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'block\'">' +
-            '<span class="splash-logo-text" style="display:none">IPRA no Ariri</span>' +
+            '<div class="mackenzie-mark" aria-label="Mackenzie">' +
+              '<span class="mackenzie-mark-kicker">Universidade Presbiteriana</span>' +
+              '<span class="mackenzie-mark-title">Mackenzie</span>' +
+              '<span class="mackenzie-mark-subtitle">Sistema de Campo e Diario</span>' +
+            '</div>' +
           '</div>' +
         '</div>' +
         '<div class="splash-verse-area">' +
