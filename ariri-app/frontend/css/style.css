@@ -371,6 +371,7 @@ body {
 .page-subtitle {
   font-size: 14px;
   color: var(--text-secondary);
+}
 
 /* ============================================
    Page Top Bar (logo left + title right)
