@@ -117,24 +117,32 @@
     var base = window.Sync ? window.Sync.getServerUrl() : '';
     var feedEl = document.getElementById('diary-feed');
     var loadingEl = document.getElementById('diary-loading');
+    var initialPendingPosts = [];
 
-    Promise.all([
-      window.Sync && window.Sync.fetchJsonWithCache
+    loadPendingPosts().then(function (pendingPosts) {
+      initialPendingPosts = pendingPosts || [];
+      if (initialPendingPosts.length > 0) {
+        loadingEl.classList.add('hidden');
+        renderPosts(feedEl, sortPostsDescending(initialPendingPosts.slice()), base);
+      }
+
+      return window.Sync && window.Sync.fetchJsonWithCache
         ? window.Sync.fetchJsonWithCache('/api/posts', 'posts', 2500)
         : fetch(base + '/api/posts')
             .then(function (res) {
               if (!res.ok) throw new Error('err');
               return res.json();
             })
-            .catch(function () { return []; }),
-      loadPendingPosts()
-    ]).then(function (results) {
-      var onlinePosts = results[0] || [];
-      var pendingPosts = results[1] || [];
+            .catch(function () { return []; });
+    }).then(function (onlinePosts) {
       loadingEl.classList.add('hidden');
-      renderPosts(feedEl, sortPostsDescending(pendingPosts.concat(onlinePosts)), base);
+      renderPosts(feedEl, sortPostsDescending(initialPendingPosts.concat(onlinePosts || [])), base);
     }).catch(function () {
       loadingEl.classList.add('hidden');
+      if (initialPendingPosts.length > 0) {
+        renderPosts(feedEl, sortPostsDescending(initialPendingPosts.slice()), base);
+        return;
+      }
       feedEl.innerHTML =
         '<div class="empty-state"><p class="empty-state-text">Nao foi possivel carregar as postagens.</p></div>';
     });

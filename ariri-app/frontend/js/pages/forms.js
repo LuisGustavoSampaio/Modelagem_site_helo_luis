@@ -208,34 +208,48 @@
     var base = window.Sync ? window.Sync.getServerUrl() : '';
     var dashboardEl = document.getElementById('forms-dashboard');
     var loadingEl = document.getElementById('forms-loading');
+    var initialPendingForms = [];
 
-    Promise.all([
-      window.Sync && window.Sync.fetchJsonWithCache
+    loadPendingForms().then(function (pendingForms) {
+      initialPendingForms = pendingForms || [];
+      loadingEl.classList.add('hidden');
+
+      if (initialPendingForms.length > 0) {
+        dashboardEl.innerHTML = '<div class="detail-cards">' +
+          buildDashboardCard(initialPendingForms) +
+          buildPendingFormsCard(initialPendingForms) +
+          '</div>';
+      }
+
+      return window.Sync && window.Sync.fetchJsonWithCache
         ? window.Sync.fetchJsonWithCache('/api/forms', 'forms', 2500)
         : fetch(base + '/api/forms')
             .then(function (res) {
               if (!res.ok) throw new Error('err');
               return res.json();
             })
-            .catch(function () { return []; }),
-      loadPendingForms()
-    ]).then(function (results) {
-      var syncedForms = results[0] || [];
-      var pendingForms = results[1] || [];
-      var allForms = syncedForms.concat(pendingForms);
-
+            .catch(function () { return []; });
+    }).then(function (syncedForms) {
+      var allForms = (syncedForms || []).concat(initialPendingForms);
       loadingEl.classList.add('hidden');
 
-      var dashboardHtml = '';
       if (allForms.length > 0) {
-        dashboardHtml += '<div class="detail-cards">' + buildDashboardCard(allForms) + buildPendingFormsCard(pendingForms) + '</div>';
+        dashboardEl.innerHTML = '<div class="detail-cards">' +
+          buildDashboardCard(allForms) +
+          buildPendingFormsCard(initialPendingForms) +
+          '</div>';
       } else {
-        dashboardHtml = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
+        dashboardEl.innerHTML = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
       }
-
-      dashboardEl.innerHTML = dashboardHtml;
     }).catch(function () {
       loadingEl.classList.add('hidden');
+      if (initialPendingForms.length > 0) {
+        dashboardEl.innerHTML = '<div class="detail-cards">' +
+          buildDashboardCard(initialPendingForms) +
+          buildPendingFormsCard(initialPendingForms) +
+          '</div>';
+        return;
+      }
       dashboardEl.innerHTML = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
     });
   }
