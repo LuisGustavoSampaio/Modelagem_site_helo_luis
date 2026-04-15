@@ -18,6 +18,7 @@ const Sync = (() => {
   var POLL_INTERVAL = 30000; // 30 seconds
   var STORES = ['pending_forms', 'pending_posts', 'pending_receipts'];
   var LS_KEY = 'server_url';
+  var DEFAULT_SERVER_URL = 'https://modelagem-site-helo-luis.onrender.com';
 
   var _intervalId = null;
 
@@ -25,11 +26,11 @@ const Sync = (() => {
 
   /**
    * Return the configured base URL for the server.
-   * Defaults to '' (empty string = same origin).
+   * Defaults to the deployed Render backend.
    * @returns {string}
    */
   function getServerUrl() {
-    return localStorage.getItem(LS_KEY) || '';
+    return localStorage.getItem(LS_KEY) || DEFAULT_SERVER_URL;
   }
 
   /**
