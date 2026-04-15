@@ -12,6 +12,12 @@
       .replace(/>/g, '&gt;');
   }
 
+  function escapeJsString(value) {
+    return String(value || '')
+      .replace(/\\/g, '\\\\')
+      .replace(/'/g, "\\'");
+  }
+
   function formatDate(isoStr) {
     if (!isoStr) return '';
     try {
@@ -98,13 +104,21 @@
 
     var imageHtml = '';
     if (imageSrc) {
+      var imageErrorHandler =
+        "var card=this.closest('.diary-post-card');" +
+        "if(card && card.dataset.pendingSync!=='true'){" +
+          "if(window.Sync&&window.Sync.removeCachedListItem){window.Sync.removeCachedListItem('posts','" + escapeJsString(post.id) + "');}" +
+          "card.remove();" +
+          "return;" +
+        "}" +
+        "this.style.display='none';if(this.parentNode){this.parentNode.style.display='none';}";
       imageHtml =
         '<div class="diary-post-media">' +
-          '<img class="diary-post-image" src="' + imageSrc + '" alt="Imagem da postagem" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.style.display=\'none\'">' +
+          '<img class="diary-post-image" src="' + imageSrc + '" alt="Imagem da postagem" loading="lazy" onerror="' + imageErrorHandler + '">' +
         '</div>';
     }
 
-    return '<article class="diary-post-card' + (post.pending_sync ? ' pending-sync' : '') + '">' +
+    return '<article class="diary-post-card' + (post.pending_sync ? ' pending-sync' : '') + '" data-post-id="' + escapeAttr(post.id) + '" data-pending-sync="' + (post.pending_sync ? 'true' : 'false') + '">' +
       '<div class="diary-post-header">' +
         '<div class="diary-post-header-main">' +
           '<span class="diary-post-author">' + authorName + '</span>' +
