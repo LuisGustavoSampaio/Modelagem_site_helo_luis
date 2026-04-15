@@ -12,6 +12,10 @@ from backend.models import Receipt
 receipts_bp = Blueprint('receipts', __name__)
 
 
+def _normalize_name(value):
+    return ' '.join(str(value or '').strip().lower().split())
+
+
 def _build_image_url(image_path):
     if not image_path:
         return None
@@ -80,19 +84,17 @@ def list_receipts():
     """Lista todos os comprovantes ordenados por created_at decrescente."""
     try:
         volunteer_name = request.args.get('volunteer_name', '').strip()
-        owner_key = request.args.get('owner_key', '').strip()
 
         query = Receipt.query
-        if owner_key:
-            query = query.filter(Receipt.owner_key == owner_key)
-        elif volunteer_name:
-            query = query.filter(Receipt.volunteer_name == volunteer_name)
-        else:
+        normalized_name = _normalize_name(volunteer_name)
+        if not normalized_name:
             return jsonify([]), 200
 
         receipts = query.order_by(Receipt.created_at.desc()).all()
         result = []
         for r in receipts:
+            if _normalize_name(r.volunteer_name) != normalized_name:
+                continue
             result.append({
                 "id": r.id,
                 "volunteer_name": r.volunteer_name,

@@ -11,6 +11,13 @@
     } catch (e) { return s; }
   }
 
+  function normalizeName(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+  }
+
   function buildCard(r, base) {
     var imageSrc = r.image_url || (r.image_path ? (base + '/uploads/' + r.image_path) : '');
     var img = imageSrc ? '<img class="diary-post-image" src="' + imageSrc + '" alt="Comprovante" loading="lazy" onerror="this.style.display=\'none\'">' : '';
@@ -55,24 +62,22 @@
 
     var base = window.Sync ? window.Sync.getServerUrl() : '';
     var volunteerName = (localStorage.getItem('volunteer_name') || '').trim();
-    var ownerKey = window.Sync && window.Sync.getOwnerKeyForVolunteer
-      ? window.Sync.getOwnerKeyForVolunteer(volunteerName)
-      : '';
+    var cacheKey = 'receipts:' + normalizeName(volunteerName);
     var listEl = document.getElementById('rec-list');
     var loadEl = document.getElementById('rec-load');
 
-    fetch(base + '/api/receipts?volunteer_name=' + encodeURIComponent(volunteerName) + '&owner_key=' + encodeURIComponent(ownerKey))
+    fetch(base + '/api/receipts?volunteer_name=' + encodeURIComponent(volunteerName))
       .then(function (r) { if (!r.ok) throw new Error('err'); return r.json(); })
       .then(function (recs) {
         if (window.Sync && window.Sync.cacheApiData) {
-          window.Sync.cacheApiData('receipts', recs);
+          window.Sync.cacheApiData(cacheKey, recs);
         }
         loadEl.classList.add('hidden');
         renderReceiptList(listEl, recs, base);
       })
       .catch(function () {
         var cachedReceipts = window.Sync && window.Sync.getCachedApiData
-          ? window.Sync.getCachedApiData('receipts')
+          ? window.Sync.getCachedApiData(cacheKey)
           : null;
         loadEl.classList.add('hidden');
         if (cachedReceipts && cachedReceipts.length > 0) {

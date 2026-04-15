@@ -89,7 +89,7 @@
       .then(function () { toast('Comprovante enviado!', false); window.location.hash = '#/menu/accounts'; })
       .catch(function (err) {
         console.error('Receipt submit error:', err);
-        saveOff(title, desc, imgFile).then(function () {
+        saveOff(volunteerName, title, desc, imgFile).then(function () {
           toast('Salvo localmente.', false); window.location.hash = '#/menu/accounts';
         }).catch(function (err2) {
           console.error('Offline save error:', err2);
