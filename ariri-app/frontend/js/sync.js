@@ -254,9 +254,11 @@ const Sync = (() => {
               if (syncedIds.indexOf(item.id) === -1) return;
 
               if (item.type === 'post') {
-                upsertCachedListItem('posts', {
+                var volunteerName = item.data && item.data.volunteer_name;
+                var scopedPostCacheKey = 'posts:' + normalizeName(volunteerName);
+                upsertCachedListItem(scopedPostCacheKey, {
                   id: item.id,
-                  volunteer_name: item.data && item.data.volunteer_name,
+                  volunteer_name: volunteerName,
                   owner_key: item.data && item.data.owner_key,
                   title: item.data && item.data.title,
                   description: item.data && item.data.description,
