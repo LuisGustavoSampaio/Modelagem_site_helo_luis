@@ -12,7 +12,8 @@
   }
 
   function buildCard(r, base) {
-    var img = r.image_path ? '<img class="diary-post-image" src="' + base + '/uploads/' + r.image_path + '" alt="Comprovante" loading="lazy">' : '';
+    var imageSrc = r.image_url || (r.image_path ? (base + '/uploads/' + r.image_path) : '');
+    var img = imageSrc ? '<img class="diary-post-image" src="' + imageSrc + '" alt="Comprovante" loading="lazy" onerror="this.style.display=\'none\'">' : '';
     return '<article class="diary-post-card">' +
       '<div class="diary-post-header"><span class="diary-post-author" style="color:var(--green)">' + (r.title || '') + '</span><span class="diary-post-date">' + formatDate(r.created_at) + '</span></div>' +
       img + '<div class="diary-post-body"><p class="diary-post-desc">' + (r.description || '') + '</p></div></article>';

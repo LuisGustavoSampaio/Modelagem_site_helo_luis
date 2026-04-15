@@ -3,13 +3,22 @@
 import os
 import uuid
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, current_app, jsonify, request, url_for
 from werkzeug.utils import secure_filename
 
 from backend.app import db
 from backend.models import Receipt
 
 receipts_bp = Blueprint('receipts', __name__)
+
+
+def _build_image_url(image_path):
+    if not image_path:
+        return None
+    try:
+        return url_for('serve_upload', filename=image_path, _external=True)
+    except RuntimeError:
+        return '/uploads/' + image_path
 
 
 @receipts_bp.route('/api/receipts', methods=['POST'])
@@ -51,6 +60,7 @@ def create_receipt():
             "title": receipt.title,
             "description": receipt.description,
             "image_path": receipt.image_path,
+            "image_url": _build_image_url(receipt.image_path),
             "created_at": receipt.created_at.isoformat() if receipt.created_at else None,
         }), 201
 
@@ -71,6 +81,7 @@ def list_receipts():
                 "title": r.title,
                 "description": r.description,
                 "image_path": r.image_path,
+                "image_url": _build_image_url(r.image_path),
                 "created_at": r.created_at.isoformat() if r.created_at else None,
             })
         return jsonify(result), 200
