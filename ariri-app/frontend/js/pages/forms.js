@@ -170,8 +170,9 @@
       legendHtml + '</div>';
   }
 
-  function buildDashboardCard(forms) {
+  function buildDashboardCard(forms, pendingForms) {
     var normalizedForms = (forms || []).map(normalizeAnyForm);
+    var normalizedPendingForms = (pendingForms || []).map(normalizeAnyForm);
     var agg = aggregateActions(normalizedForms);
     var maxCount = 0;
     ACTION_TYPES.forEach(function (a) { if (agg.counts[a] > maxCount) maxCount = agg.counts[a]; });
@@ -181,12 +182,20 @@
       totalPeople += Number(f.people_served || 1);
     });
 
+    var pendingPeople = 0;
+    normalizedPendingForms.forEach(function (f) {
+      pendingPeople += Number(f.people_served || 1);
+    });
+
     return '<div class="detail-card">' +
       '<p class="detail-card-label">Dashboard:</p>' +
       '<div class="detail-card-content">' +
         '<div style="text-align:center;margin-bottom:20px;padding:16px;background:rgba(255,255,255,0.5);border-radius:12px">' +
           '<div style="font-size:36px;font-weight:800;color:var(--green)">' + totalPeople + '</div>' +
-          '<div style="font-size:13px;color:var(--text-secondary);font-weight:500">Pessoas impactadas</div>' +
+          '<div style="font-size:13px;color:var(--text-secondary);font-weight:500">Pessoas impactadas sincronizadas</div>' +
+          (pendingPeople > 0
+            ? '<div style="font-size:12px;color:var(--text-secondary);margin-top:8px">+' + pendingPeople + ' aguardando conexao neste aparelho</div>'
+            : '') +
         '</div>' +
         '<div class="chart-container" style="background:transparent;box-shadow:none;padding:0;margin-bottom:16px">' +
           buildBarChart(agg.counts, maxCount) +
@@ -245,7 +254,7 @@
     }
 
     dashboardEl.innerHTML = '<div class="detail-cards">' +
-      buildDashboardCard(dashboardForms) +
+      buildDashboardCard(dashboardForms, pendingList) +
       buildPendingFormsCard(pendingList) +
       '</div>';
   }
