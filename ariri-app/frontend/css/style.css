@@ -45,14 +45,14 @@ a {
 
 /* --- CSS Variables --- */
 :root {
-  --green: #1a4731;
-  --green-light: #2d6b4a;
-  --cream: #faf6ee;
-  --cream-dark: #ede7d3;
+  --green: #c8102e;
+  --green-light: #a30d26;
+  --cream: #fff8f8;
+  --cream-dark: #f3dfe3;
   --white: #ffffff;
-  --text-primary: #1a1a1a;
-  --text-secondary: #6b6b6b;
-  --text-muted: #999999;
+  --text-primary: #23171a;
+  --text-secondary: #77575f;
+  --text-muted: #a1868d;
   --danger: #d32f2f;
   --warning: #f9a825;
   --success: #2e7d32;
@@ -72,7 +72,8 @@ body {
   font-size: 16px;
   line-height: 1.5;
   color: var(--text-primary);
-  background-color: var(--cream);
+  background:
+    linear-gradient(180deg, #fffdfd 0%, var(--cream) 44%, #f7e7ea 100%);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -98,7 +99,7 @@ body {
   left: -30%;
   width: 100%;
   height: 70%;
-  background: rgba(255, 255, 255, 0.3);
+  background: rgba(200, 16, 46, 0.06);
   transform: rotate(-15deg);
   border-radius: 0 0 50% 0;
   pointer-events: none;
@@ -179,7 +180,7 @@ body {
   max-width: 480px;
   height: var(--nav-height);
   padding-bottom: var(--safe-bottom);
-  background: var(--green);
+  background: linear-gradient(180deg, #d41435 0%, #b70f2a 100%);
   display: flex;
   align-items: center;
   justify-content: space-around;
@@ -227,7 +228,9 @@ body {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background-color: #faf6ee;
+  background:
+    radial-gradient(circle at top left, rgba(200, 16, 46, 0.08), transparent 32%),
+    linear-gradient(180deg, #fffdfd 0%, var(--cream) 100%);
   cursor: pointer;
   user-select: none;
   -webkit-user-select: none;
@@ -526,7 +529,7 @@ body {
 }
 
 .btn-secondary:hover {
-  background-color: #e8e2d0;
+  background-color: #ebd2d7;
 }
 
 .btn-full {
@@ -697,7 +700,7 @@ body {
 }
 
 .form-field-box:focus {
-  box-shadow: 0 0 0 2px rgba(26, 71, 49, 0.15);
+  box-shadow: 0 0 0 2px rgba(200, 16, 46, 0.18);
 }
 
 .form-field-box[readonly] {
@@ -737,7 +740,7 @@ body {
 .form-textarea:focus,
 .form-select:focus {
   border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(26, 71, 49, 0.1);
+  box-shadow: 0 0 0 3px rgba(200, 16, 46, 0.12);
 }
 
 .form-input::placeholder,
@@ -792,7 +795,7 @@ body {
 
 .checkbox-item.checked,
 .checkbox-item:has(input:checked) {
-  background: rgba(26, 71, 49, 0.1);
+  background: rgba(200, 16, 46, 0.1);
   color: var(--green);
   font-weight: 600;
 }
@@ -820,7 +823,7 @@ body {
 .image-upload:hover,
 .image-upload:focus-within {
   border-color: var(--green);
-  background: rgba(26, 71, 49, 0.03);
+  background: rgba(200, 16, 46, 0.04);
 }
 
 .image-upload input[type="file"] {
@@ -872,7 +875,7 @@ body {
 
 .diary-post-card.pending-sync {
   border: 2px dashed rgba(249, 168, 37, 0.7);
-  background: #fff8e6;
+  background: #fff6ea;
 }
 
 .diary-post-header {
@@ -1038,7 +1041,7 @@ body {
 }
 
 .menu-simple-item:active {
-  background: rgba(26, 71, 49, 0.06);
+  background: rgba(200, 16, 46, 0.08);
 }
 
 .menu-simple-arrow {
@@ -1088,7 +1091,7 @@ body {
 
 .pin-input:focus {
   border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(26, 71, 49, 0.1);
+  box-shadow: 0 0 0 3px rgba(200, 16, 46, 0.12);
 }
 
 .pin-error {
@@ -1490,7 +1493,7 @@ body {
 
 .identify-input:focus {
   border-color: var(--green);
-  box-shadow: 0 0 0 3px rgba(26, 71, 49, 0.1);
+  box-shadow: 0 0 0 3px rgba(200, 16, 46, 0.12);
 }
 
 /* ============================================
