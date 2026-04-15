@@ -125,8 +125,8 @@
           return res.json();
         })
         .then(function (posts) {
-          if (window.Sync && window.Sync.cacheApiData) {
-            window.Sync.cacheApiData('posts', posts);
+          if (window.Sync && window.Sync.replaceCachedListIfUseful) {
+            return window.Sync.replaceCachedListIfUseful('posts', posts || []);
           }
           return posts || [];
         })

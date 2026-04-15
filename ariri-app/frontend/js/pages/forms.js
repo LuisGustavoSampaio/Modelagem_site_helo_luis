@@ -216,8 +216,8 @@
           return res.json();
         })
         .then(function (forms) {
-          if (window.Sync && window.Sync.cacheApiData) {
-            window.Sync.cacheApiData('forms', forms);
+          if (window.Sync && window.Sync.replaceCachedListIfUseful) {
+            return window.Sync.replaceCachedListIfUseful('forms', forms || []);
           }
           return forms || [];
         })

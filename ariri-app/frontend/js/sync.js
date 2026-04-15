@@ -60,6 +60,27 @@ const Sync = (() => {
     }
   }
 
+  function appendCachedListItem(key, item) {
+    var current = getCachedApiData(key);
+    var list = Array.isArray(current) ? current.slice() : [];
+    list.unshift(item);
+    cacheApiData(key, list);
+    return list;
+  }
+
+  function replaceCachedListIfUseful(key, items) {
+    var current = getCachedApiData(key);
+    var currentList = Array.isArray(current) ? current : [];
+    var nextList = Array.isArray(items) ? items : [];
+
+    if (nextList.length === 0 && currentList.length > 0) {
+      return currentList;
+    }
+
+    cacheApiData(key, nextList);
+    return nextList;
+  }
+
   // ─── Connectivity indicator ───
 
   /**
@@ -246,7 +267,9 @@ const Sync = (() => {
     getServerUrl: getServerUrl,
     setServerUrl: setServerUrl,
     cacheApiData: cacheApiData,
-    getCachedApiData: getCachedApiData
+    getCachedApiData: getCachedApiData,
+    appendCachedListItem: appendCachedListItem,
+    replaceCachedListIfUseful: replaceCachedListIfUseful
   };
 })();
 

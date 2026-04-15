@@ -86,7 +86,25 @@
   function saveOff(vol, title, desc, imgFile) {
     var rp = (imgFile && window.resizeImage) ? window.resizeImage(imgFile) : Promise.resolve(imgFile);
     return rp.then(function (p) { var dp = p ? readB64(p) : Promise.resolve(null); return dp.then(function (b64) {
-      return window.DB.addPending('pending_posts', { type: 'post', data: { volunteer_name: vol, title: title, description: desc, image: b64 } });
+      var createdAt = new Date().toISOString();
+      return window.DB.addPending('pending_posts', {
+        type: 'post',
+        created_at: createdAt,
+        data: { volunteer_name: vol, title: title, description: desc, image: b64 }
+      }).then(function (id) {
+        if (window.Sync && window.Sync.appendCachedListItem) {
+          window.Sync.appendCachedListItem('posts', {
+            id: id,
+            volunteer_name: vol,
+            title: title,
+            description: desc,
+            image_url: b64,
+            created_at: createdAt,
+            pending_sync: true
+          });
+        }
+        return id;
+      });
     }); });
   }
 })();

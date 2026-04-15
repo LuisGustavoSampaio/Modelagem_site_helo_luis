@@ -116,7 +116,25 @@
     return rp.then(function (p) {
       var dp = p ? readB64(p) : Promise.resolve(null);
       return dp.then(function (b64) {
-        return window.DB.addPending('pending_forms', { type: 'form', data: { volunteer_name: vol, actions: acts, description: desc, people_served: parseInt(people) || 1, image: b64 } });
+        var createdAt = new Date().toISOString();
+        return window.DB.addPending('pending_forms', {
+          type: 'form',
+          created_at: createdAt,
+          data: { volunteer_name: vol, actions: acts, description: desc, people_served: parseInt(people) || 1, image: b64 }
+        }).then(function (id) {
+          if (window.Sync && window.Sync.appendCachedListItem) {
+            window.Sync.appendCachedListItem('forms', {
+              id: id,
+              volunteer_name: vol,
+              actions: acts,
+              description: desc,
+              people_served: parseInt(people) || 1,
+              created_at: createdAt,
+              pending_sync: true
+            });
+          }
+          return id;
+        });
       });
     });
   }
