@@ -10,7 +10,7 @@
   window.renderInfoPage = function (container) {
     var html =
       '<div class="page-top-bar">' +
-        '<img src="assets/logo.png" alt="IPRA no Ariri" class="page-top-logo" onerror="this.style.display=\'none\'">' +
+        '<div class="page-top-brand" aria-label="Mackenzie"><span class="page-top-brand-kicker">UPM</span><span class="page-top-brand-title">Mackenzie</span></div>' +
         '<h1 class="page-top-title">Informações</h1>' +
       '</div>' +
       '<div class="info-cards">';
