@@ -234,7 +234,10 @@
   }
 
   function renderDashboardState(dashboardEl, pendingForms, syncedForms) {
-    var merged = mergeForms([pendingForms || [], syncedForms || []]);
+    var pendingList = pendingForms || [];
+    var syncedList = syncedForms || [];
+    var merged = mergeForms([pendingList, syncedList]);
+    var dashboardForms = mergeForms([syncedList]);
 
     if (merged.length === 0) {
       dashboardEl.innerHTML = '<div class="detail-cards"><div class="detail-card"><p class="detail-card-label">Dashboard:</p><div class="detail-card-content"><p class="text-muted" style="text-align:center;padding:24px 0">Nenhum dado ainda</p></div></div></div>';
@@ -242,8 +245,8 @@
     }
 
     dashboardEl.innerHTML = '<div class="detail-cards">' +
-      buildDashboardCard(merged) +
-      buildPendingFormsCard(pendingForms || []) +
+      buildDashboardCard(dashboardForms) +
+      buildPendingFormsCard(pendingList) +
       '</div>';
   }
 
