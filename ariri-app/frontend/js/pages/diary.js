@@ -68,12 +68,11 @@
     var pendingBadge = post.pending_sync
       ? '<span class="sync-pending-badge">Aguardando conexao</span>'
       : '';
+    var imageSrc = post.image_url || (post.image_path ? (baseUrl + '/uploads/' + post.image_path) : '');
 
     var imageHtml = '';
-    if (post.image_url) {
-      imageHtml = '<img class="diary-post-image" src="' + post.image_url + '" alt="Imagem da postagem" loading="lazy">';
-    } else if (post.image_path) {
-      imageHtml = '<img class="diary-post-image" src="' + baseUrl + '/uploads/' + post.image_path + '" alt="Imagem da postagem" loading="lazy">';
+    if (imageSrc) {
+      imageHtml = '<img class="diary-post-image" src="' + imageSrc + '" alt="Imagem da postagem" loading="lazy" onerror="this.style.display=\'none\'">';
     }
 
     return '<article class="diary-post-card' + (post.pending_sync ? ' pending-sync' : '') + '">' +

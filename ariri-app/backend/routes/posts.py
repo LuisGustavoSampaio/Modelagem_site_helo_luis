@@ -3,13 +3,22 @@
 import os
 import uuid
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, current_app, jsonify, request, url_for
 from werkzeug.utils import secure_filename
 
 from backend.app import db
 from backend.models import Post
 
 posts_bp = Blueprint('posts', __name__)
+
+
+def _build_image_url(image_path):
+    if not image_path:
+        return None
+    try:
+        return url_for('serve_upload', filename=image_path, _external=True)
+    except RuntimeError:
+        return '/uploads/' + image_path
 
 
 @posts_bp.route('/api/posts', methods=['POST'])
@@ -57,6 +66,7 @@ def create_post():
             "title": post.title,
             "description": post.description,
             "image_path": post.image_path,
+            "image_url": _build_image_url(post.image_path),
             "created_at": post.created_at.isoformat() if post.created_at else None,
         }), 201
 
@@ -78,6 +88,7 @@ def list_posts():
                 "title": p.title,
                 "description": p.description,
                 "image_path": p.image_path,
+                "image_url": _build_image_url(p.image_path),
                 "created_at": p.created_at.isoformat() if p.created_at else None,
             })
         return jsonify(result), 200
