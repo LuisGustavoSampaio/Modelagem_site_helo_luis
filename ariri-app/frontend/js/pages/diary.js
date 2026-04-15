@@ -89,10 +89,9 @@
     var imageHtml = '';
     if (imageSrc) {
       imageHtml =
-        '<button class="diary-post-media" type="button" aria-label="Ampliar imagem da postagem" ' +
-          'data-image-src="' + escapeAttr(imageSrc) + '">' +
+        '<div class="diary-post-media">' +
           '<img class="diary-post-image" src="' + imageSrc + '" alt="Imagem da postagem" loading="lazy" onerror="this.style.display=\'none\';this.parentNode.style.display=\'none\'">' +
-        '</button>';
+        '</div>';
     }
 
     return '<article class="diary-post-card' + (post.pending_sync ? ' pending-sync' : '') + '">' +
@@ -153,19 +152,11 @@
         '</div>' +
       '</div>' +
       '<div id="diary-feed" class="mt-16"></div>' +
-      '<div id="diary-loading" class="text-center mt-24"><div class="spinner"></div></div>' +
-      '<div id="diary-lightbox" class="diary-lightbox hidden" aria-hidden="true">' +
-        '<div class="diary-lightbox-backdrop" data-close-lightbox="true"></div>' +
-        '<button class="diary-lightbox-close" id="diary-lightbox-close" type="button" aria-label="Fechar imagem ampliada">&times;</button>' +
-        '<img id="diary-lightbox-image" class="diary-lightbox-image" alt="Imagem ampliada da postagem">' +
-      '</div>';
+      '<div id="diary-loading" class="text-center mt-24"><div class="spinner"></div></div>';
 
     container.innerHTML = html;
 
     var card = document.getElementById('new-post-card');
-    var lightboxEl = document.getElementById('diary-lightbox');
-    var lightboxImageEl = document.getElementById('diary-lightbox-image');
-    var lightboxCloseEl = document.getElementById('diary-lightbox-close');
     var base = window.Sync ? window.Sync.getServerUrl() : '';
     var currentVolunteer = (localStorage.getItem('volunteer_name') || '').trim();
     var feedEl = document.getElementById('diary-feed');
@@ -173,18 +164,6 @@
     var initialPendingPosts = [];
 
     function goNew() { window.location.hash = '#/diary/new'; }
-
-    function closeLightbox() {
-      lightboxEl.classList.add('hidden');
-      lightboxEl.setAttribute('aria-hidden', 'true');
-      lightboxImageEl.removeAttribute('src');
-    }
-
-    function openLightbox(trigger) {
-      lightboxImageEl.src = trigger.getAttribute('data-image-src') || '';
-      lightboxEl.classList.remove('hidden');
-      lightboxEl.setAttribute('aria-hidden', 'false');
-    }
 
     function removePost(postId, isPendingOnly) {
       if (!postId || !currentVolunteer) return;
@@ -226,12 +205,6 @@
     });
 
     container.addEventListener('click', function (e) {
-      var mediaTrigger = e.target.closest('.diary-post-media');
-      if (mediaTrigger) {
-        openLightbox(mediaTrigger);
-        return;
-      }
-
       var deleteTrigger = e.target.closest('[data-delete-post]');
       if (deleteTrigger) {
         removePost(
@@ -239,17 +212,6 @@
           deleteTrigger.getAttribute('data-pending-sync') === 'true'
         );
         return;
-      }
-
-      if (e.target.closest('[data-close-lightbox="true"]') || e.target.id === 'diary-lightbox-close') {
-        closeLightbox();
-      }
-    });
-
-    lightboxCloseEl.addEventListener('click', closeLightbox);
-    container.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && lightboxEl && !lightboxEl.classList.contains('hidden')) {
-        closeLightbox();
       }
     });
 
