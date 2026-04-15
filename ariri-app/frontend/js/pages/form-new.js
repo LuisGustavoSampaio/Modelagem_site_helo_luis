@@ -84,13 +84,22 @@
 
     var check = (window.Sync && window.Sync.ping) ? window.Sync.ping() : Promise.resolve(false);
     check.then(function (on) {
-      return on ? sendOn(vol, acts, desc, people, imgFile) : saveOff(vol, acts, desc, people, imgFile);
-    }).then(function () {
-      toast('Formulario salvo!', false); window.location.hash = '#/forms';
+      if (on) {
+        return sendOn(vol, acts, desc, people, imgFile).then(function () {
+          toast('Formulario salvo!', false);
+          window.location.hash = '#/forms';
+        });
+      }
+
+      return saveOff(vol, acts, desc, people, imgFile).then(function () {
+        toast('Formulario publicado, aguardando conexao.', false);
+        window.location.hash = '#/forms';
+      });
     }).catch(function (err) {
       console.error('Form submit error:', err);
       saveOff(vol, acts, desc, people, imgFile).then(function () {
-        toast('Formulario publicado, aguardando conexao.', false); window.location.hash = '#/forms';
+        toast('Formulario publicado, aguardando conexao.', false);
+        window.location.hash = '#/forms';
       }).catch(function (err2) {
         console.error('Offline save error:', err2);
         toast('Erro ao salvar.', true); btn.disabled = false; btn.textContent = 'Enviar';
