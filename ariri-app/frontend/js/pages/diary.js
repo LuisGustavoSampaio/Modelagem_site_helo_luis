@@ -49,7 +49,8 @@
   function canDeletePost(post, currentVolunteer, currentOwnerKey) {
     if (!currentVolunteer) return false;
     if (post && post.owner_key) {
-      return !!currentOwnerKey && post.owner_key === currentOwnerKey;
+      return post.owner_key === currentOwnerKey ||
+        normalizeName(post.volunteer_name) === normalizeName(currentVolunteer);
     }
     return normalizeName(post && post.volunteer_name) === normalizeName(currentVolunteer);
   }
@@ -110,7 +111,7 @@
           '<span class="diary-post-date">' + dateStr + '</span>' +
         '</div>' +
         (canDelete
-          ? '<button class="diary-post-delete" type="button" data-delete-post="' + escapeAttr(post.id) + '" data-pending-sync="' + (post.pending_sync ? 'true' : 'false') + '" aria-label="Excluir postagem">Excluir</button>'
+          ? '<button class="diary-post-delete" type="button" data-delete-post="' + escapeAttr(post.id) + '" data-post-owner-key="' + escapeAttr(post.owner_key || '') + '" data-pending-sync="' + (post.pending_sync ? 'true' : 'false') + '" aria-label="Excluir postagem">Excluir</button>'
           : '') +
       '</div>' +
       (pendingBadge ? '<div class="diary-pending-badge-row">' + pendingBadge + '</div>' : '') +
@@ -177,9 +178,15 @@
 
     function goNew() { window.location.hash = '#/diary/new'; }
 
-    function removePost(postId, isPendingOnly) {
+    function removePost(postId, isPendingOnly, postOwnerKey) {
       if (!postId || !currentVolunteer) return;
       if (!window.confirm('Deseja excluir esta postagem?')) return;
+
+      var pin = '';
+      if (!isPendingOnly && postOwnerKey && currentOwnerKey && postOwnerKey !== currentOwnerKey) {
+        pin = window.prompt('Confirme o PIN para excluir esta postagem neste aparelho:', '') || '';
+        if (!pin) return;
+      }
 
       var removeLocal = Promise.resolve();
       if (window.DB && window.DB.deletePending) {
@@ -201,7 +208,7 @@
         return fetch(base + '/api/posts/' + encodeURIComponent(postId) + '/delete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ volunteer_name: currentVolunteer, owner_key: currentOwnerKey })
+          body: JSON.stringify({ volunteer_name: currentVolunteer, owner_key: currentOwnerKey, pin: pin })
         });
       }).then(function (res) {
         if (!res.ok) throw new Error('delete_failed');
@@ -221,7 +228,8 @@
       if (deleteTrigger) {
         removePost(
           deleteTrigger.getAttribute('data-delete-post'),
-          deleteTrigger.getAttribute('data-pending-sync') === 'true'
+          deleteTrigger.getAttribute('data-pending-sync') === 'true',
+          deleteTrigger.getAttribute('data-post-owner-key') || ''
         );
         return;
       }

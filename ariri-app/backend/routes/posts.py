@@ -110,6 +110,7 @@ def _delete_post_impl(post_id):
         body = request.get_json(silent=True) or {}
         volunteer_name = str(body.get('volunteer_name', '')).strip()
         owner_key = str(body.get('owner_key', '')).strip()
+        pin = str(body.get('pin', '')).strip()
         if not volunteer_name:
             return jsonify({"error": "volunteer_name e obrigatorio"}), 400
 
@@ -119,7 +120,10 @@ def _delete_post_impl(post_id):
 
         if post.owner_key:
             if not owner_key or post.owner_key != owner_key:
-                return jsonify({"error": "Voce nao pode excluir a postagem de outra pessoa"}), 403
+                same_name = _normalize_name(post.volunteer_name) == _normalize_name(volunteer_name)
+                valid_pin = pin and pin == current_app.config.get('ACCESS_PIN', '')
+                if not (same_name and valid_pin):
+                    return jsonify({"error": "Voce nao pode excluir a postagem de outra pessoa"}), 403
         elif _normalize_name(post.volunteer_name) != _normalize_name(volunteer_name):
             return jsonify({"error": "Voce nao pode excluir a postagem de outra pessoa"}), 403
 
