@@ -1,9 +1,9 @@
 (function () {
   'use strict';
   var ACTION_TYPES = [
-    'Evangelismo', 'Infantil', 'Educação',
-    'Visitação', 'Manutenção', 'Odontologia',
-    'Oração', 'Auxílio ao MEAP', 'P. Socorros',
+    'Evangelismo', 'Infantil', 'Educacao',
+    'Visitacao', 'Manutencao', 'Odontologia',
+    'Oracao', 'Auxilio ao MEAP', 'P. Socorros',
     'Aconselhamento', 'Cozinha', 'Outros'
   ];
   var backSvg = '<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="14 8 10 12 14 16"/></svg>';
@@ -32,15 +32,15 @@
         '<button class="back-circle-btn" id="form-back">' + backSvg + '</button>' +
         '<img src="assets/logo.png" alt="IPRA no Ariri" class="page-top-logo" onerror="this.style.display=\'none\'">' +
       '</div>' +
-      '<h2 class="form-page-title">Formulário:</h2>' +
+      '<h2 class="form-page-title">Formulario:</h2>' +
       '<form id="new-form" novalidate>' +
-        '<div class="form-section"><p class="form-section-label">Ação realizada: *</p>' +
+        '<div class="form-section"><p class="form-section-label">Acao realizada: *</p>' +
           '<div class="detail-card" style="min-height:auto;padding:14px">' + cbHtml + '</div>' +
-          '<p class="form-error hidden" id="actions-error">Selecione ao menos uma ação.</p></div>' +
+          '<p class="form-error hidden" id="actions-error">Selecione ao menos uma acao.</p></div>' +
         '<div class="form-section"><p class="form-section-label">Pessoas atendidas: *</p>' +
           '<div class="detail-card" style="min-height:auto;padding:14px"><input type="number" class="form-field-underline" id="field-people" min="1" value="1" inputmode="numeric" style="max-width:120px;border:none"></div>' +
-          '<p class="form-error hidden" id="people-error">Informe o número de pessoas.</p></div>' +
-        '<div class="form-section"><p class="form-section-label">Descrição: (opcional)</p>' +
+          '<p class="form-error hidden" id="people-error">Informe o numero de pessoas.</p></div>' +
+        '<div class="form-section"><p class="form-section-label">Descricao: (opcional)</p>' +
           '<div class="detail-card" style="min-height:auto;padding:14px"><textarea class="form-field-underline" id="field-desc" rows="4" style="border:none"></textarea></div></div>' +
         '<div class="form-section"><p class="form-section-label">Imagem: (opcional)</p>' +
           '<div class="form-upload-area" id="img-area">' + uploadSvg +
@@ -86,12 +86,11 @@
     check.then(function (on) {
       return on ? sendOn(vol, acts, desc, people, imgFile) : saveOff(vol, acts, desc, people, imgFile);
     }).then(function () {
-      toast('Formulário salvo!', false); window.location.hash = '#/forms';
+      toast('Formulario salvo!', false); window.location.hash = '#/forms';
     }).catch(function (err) {
       console.error('Form submit error:', err);
-      // Fallback: try saving offline
       saveOff(vol, acts, desc, people, imgFile).then(function () {
-        toast('Sem conexão. Salvo localmente.', false); window.location.hash = '#/forms';
+        toast('Formulario publicado, aguardando conexao.', false); window.location.hash = '#/forms';
       }).catch(function (err2) {
         console.error('Offline save error:', err2);
         toast('Erro ao salvar.', true); btn.disabled = false; btn.textContent = 'Enviar';

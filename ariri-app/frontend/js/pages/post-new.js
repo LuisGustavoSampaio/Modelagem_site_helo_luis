@@ -22,10 +22,10 @@
           '<div class="form-row-half"><p class="form-section-label">Nome:</p><div class="detail-card" style="min-height:auto;padding:10px 14px"><input type="text" class="form-field-underline" id="post-name" value="' + savedName + '" style="border:none"></div></div>' +
           '<div class="form-row-half"><p class="form-section-label">Data:</p><div class="detail-card" style="min-height:auto;padding:10px 14px"><input type="text" class="form-field-underline" id="post-date" value="' + dateStr + '" readonly style="border:none;color:var(--text-secondary)"></div></div>' +
         '</div>' +
-        '<div class="form-section"><p class="form-section-label">Título: *</p>' +
+        '<div class="form-section"><p class="form-section-label">Titulo: *</p>' +
           '<div class="detail-card" style="min-height:auto;padding:14px"><input type="text" class="form-field-underline" id="post-title" style="border:none" required></div>' +
-          '<p class="form-error hidden" id="title-error">Informe o título.</p></div>' +
-        '<div class="form-section"><p class="form-section-label">Descrição: (opcional)</p>' +
+          '<p class="form-error hidden" id="title-error">Informe o titulo.</p></div>' +
+        '<div class="form-section"><p class="form-section-label">Descricao: (opcional)</p>' +
           '<div class="detail-card" style="min-height:auto;padding:14px"><textarea class="form-field-underline" id="post-desc" rows="5" style="border:none"></textarea></div></div>' +
         '<div class="form-section"><p class="form-section-label">Imagem: (opcional)</p>' +
           '<div class="form-upload-area" id="post-img-area">' + uploadSvg + '<input type="file" accept="image/*" id="post-img"></div></div>' +
@@ -65,7 +65,7 @@
       .catch(function (err) {
         console.error('Post submit error:', err);
         saveOff(vol, title, desc, imgFile).then(function () {
-          toast('Salvo localmente.', false); window.location.hash = '#/diary';
+          toast('Postagem publicada, aguardando conexao.', false); window.location.hash = '#/diary';
         }).catch(function (err2) {
           console.error('Offline save error:', err2);
           toast('Erro ao publicar.', true); btn.disabled = false; btn.textContent = 'Publicar';
