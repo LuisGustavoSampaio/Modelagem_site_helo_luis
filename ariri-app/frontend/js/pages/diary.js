@@ -26,6 +26,13 @@
     } catch (e) { return isoStr; }
   }
 
+  function normalizeName(value) {
+    return String(value || '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+  }
+
   function normalizePendingPost(item) {
     return {
       id: item.id,
@@ -77,7 +84,7 @@
       ? '<span class="sync-pending-badge">Aguardando conexao</span>'
       : '';
     var imageSrc = post.image_url || (post.image_path ? (baseUrl + '/uploads/' + post.image_path) : '');
-    var canDelete = currentVolunteer && authorName === currentVolunteer;
+    var canDelete = currentVolunteer && normalizeName(authorName) === normalizeName(currentVolunteer);
 
     var imageHtml = '';
     if (imageSrc) {

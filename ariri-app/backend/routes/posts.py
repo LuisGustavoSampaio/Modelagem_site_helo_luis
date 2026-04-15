@@ -12,6 +12,10 @@ from backend.models import Post
 posts_bp = Blueprint('posts', __name__)
 
 
+def _normalize_name(value):
+    return ' '.join(str(value or '').strip().lower().split())
+
+
 def _build_image_url(image_path):
     if not image_path:
         return None
@@ -109,7 +113,7 @@ def _delete_post_impl(post_id):
         if not post:
             return jsonify({"error": "Postagem nao encontrada"}), 404
 
-        if (post.volunteer_name or '').strip() != volunteer_name:
+        if _normalize_name(post.volunteer_name) != _normalize_name(volunteer_name):
             return jsonify({"error": "Voce nao pode excluir a postagem de outra pessoa"}), 403
 
         image_path = post.image_path
