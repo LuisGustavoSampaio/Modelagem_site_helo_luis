@@ -155,6 +155,7 @@
     var card = document.getElementById('new-post-card');
     var lightboxEl = document.getElementById('diary-lightbox');
     var lightboxImageEl = document.getElementById('diary-lightbox-image');
+    var lightboxCloseEl = document.getElementById('diary-lightbox-close');
     function goNew() { window.location.hash = '#/diary/new'; }
     function closeLightbox() {
       lightboxEl.classList.add('hidden');
@@ -182,6 +183,7 @@
         closeLightbox();
       }
     });
+    lightboxCloseEl.addEventListener('click', closeLightbox);
     container.addEventListener('keydown', function (e) {
       if (e.key === 'Escape' && lightboxEl && !lightboxEl.classList.contains('hidden')) {
         closeLightbox();

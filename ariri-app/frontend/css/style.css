@@ -1073,30 +1073,34 @@ body {
   position: absolute;
   top: 18px;
   right: 18px;
-  width: 42px;
-  height: 42px;
+  width: 46px;
+  height: 46px;
   border-radius: 50%;
-  background: rgba(35, 23, 26, 0.72);
+  background: rgba(255, 255, 255, 0.94);
+  border: 1px solid rgba(200, 16, 46, 0.14);
   color: var(--white);
-  font-size: 28px;
+  color: var(--text-primary);
+  font-size: 30px;
   line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   z-index: 1;
+  box-shadow: 0 10px 24px rgba(35, 23, 26, 0.16);
 }
 
 .diary-lightbox-image {
   position: relative;
   z-index: 1;
   width: auto;
-  max-width: min(96vw, 1200px);
+  max-width: min(86vw, 960px);
   height: auto;
-  max-height: 90vh;
+  max-height: 76vh;
   object-fit: contain;
-  border-radius: 18px;
+  border-radius: 22px;
   box-shadow: 0 26px 70px rgba(35, 23, 26, 0.28);
+  background: var(--white);
 }
 
 /* ============================================
