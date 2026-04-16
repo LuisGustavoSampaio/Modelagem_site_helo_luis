@@ -1,4 +1,4 @@
-const STATIC_CACHE = 'ariri-static-v2';
+const STATIC_CACHE = 'ariri-static-v3';
 const APP_SHELL = [
   '/',
   '/index.html',
@@ -20,7 +20,9 @@ const APP_SHELL = [
   '/js/pages/receipt-new.js',
   '/js/pages/team.js',
   '/js/pages/volunteer-profile.js',
-  '/assets/logo.png'
+  '/assets/favicon.svg',
+  '/assets/pwa-icon-192.svg',
+  '/assets/pwa-icon-512.svg'
 ];
 
 self.addEventListener('install', (event) => {

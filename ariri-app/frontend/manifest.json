@@ -1,24 +1,24 @@
 {
-  "name": "IPRA no Ariri",
-  "short_name": "Ariri",
+  "name": "UPM Mackenzie Campo",
+  "short_name": "Mackenzie",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#fff8f8",
+  "background_color": "#fff5f6",
   "theme_color": "#c8102e",
-  "description": "Aplicativo offline-first para informacoes, formularios e diario de bordo do IPRA no Ariri.",
+  "description": "Aplicativo offline-first da UPM Mackenzie para informacoes, formularios, diario de bordo e prestacao de contas em campo.",
   "icons": [
     {
-      "src": "assets/logo.png",
+      "src": "assets/pwa-icon-192.svg",
       "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     },
     {
-      "src": "assets/logo.png",
+      "src": "assets/pwa-icon-512.svg",
       "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
     }
   ]
 }
