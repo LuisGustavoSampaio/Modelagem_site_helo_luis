@@ -3,5 +3,5 @@
   <desc id="desc">Fundo vermelho com anel branco e letra M centralizada.</desc>
   <rect width="192" height="192" rx="42" fill="#c8102e"/>
   <circle cx="96" cy="96" r="58" fill="none" stroke="#ffffff" stroke-width="12"/>
-  <text x="96" y="118" text-anchor="middle" fill="#ffffff" font-size="80" font-family="Georgia, 'Times New Roman', serif" font-weight="700">M</text>
+  <path d="M58 132V60h18l20 34 20-34h18v72h-14V84l-18 31h-12L72 84v48z" fill="#ffffff"/>
 </svg>
